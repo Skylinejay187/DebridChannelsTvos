@@ -1,4 +1,4 @@
-name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL RECURSIVE
+name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL DEVICE BUILD
 
 on:
   workflow_dispatch:
@@ -26,6 +26,7 @@ jobs:
           fi
 
           echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
+
           echo "Using ZIP:"
           echo "$ZIP_FILE"
 
@@ -59,6 +60,7 @@ jobs:
 
       - name: Show extracted structure
         run: |
+          echo "Extracted files:"
           find extracted | head -n 300
 
       - name: Find project.yml
@@ -81,7 +83,9 @@ jobs:
 
       - name: Generate Xcode Project
         run: |
-          cd "$(dirname "$PROJECT_YML")"
+          PROJECT_DIR=$(dirname "$PROJECT_YML")
+
+          cd "$PROJECT_DIR"
 
           xcodegen generate
 
@@ -99,7 +103,7 @@ jobs:
 
           echo "XCODEPROJ=$XCODEPROJ" >> $GITHUB_ENV
 
-      - name: Build tvOS app unsigned
+      - name: Build tvOS DEVICE app unsigned
         run: |
           APP_DIR=$(dirname "$XCODEPROJ")
 
@@ -108,32 +112,40 @@ jobs:
           xcodebuild \
             -project "$(basename "$XCODEPROJ")" \
             -scheme DebridChannelsTVOS \
-            -sdk appletvsimulator \
+            -sdk appletvos \
             -configuration Release \
+            -derivedDataPath "$GITHUB_WORKSPACE/build/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             clean build
 
       - name: Find built app
         run: |
-          APP_FILE=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          APP_FILE=$(find "$GITHUB_WORKSPACE/build/DerivedData/Build/Products/Release-appletvos" -name "*.app" | head -n 1)
 
           if [ -z "$APP_FILE" ]; then
-            echo "ERROR: Built app not found."
+            echo "ERROR: Built tvOS device app not found."
             exit 1
           fi
 
+          echo "FOUND APP:"
+          echo "$APP_FILE"
+
           echo "APP_FILE=$APP_FILE" >> $GITHUB_ENV
 
-      - name: Create IPA
+      - name: Create Payload
         run: |
           rm -rf Payload
-          mkdir Payload
+          mkdir -p Payload
 
           cp -R "$APP_FILE" Payload/
 
+      - name: Create unsigned IPA
+        run: |
           zip -qry DebridChannelsTVOS_unsigned.ipa Payload
 
-      - name: Upload IPA
+      - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DebridChannelsTVOS-Unsigned-IPA
