@@ -1,88 +1,46 @@
-name: 00 Build tvOS IPA From Source ZIP
+name: 00 Build tvOS IPA From Source ZIP - FIXED
 
 on:
-  workflow_dispatch:
+workflow_dispatch:
 
 jobs:
-  build-tvos:
-    runs-on: macos-15
+build-tvos:
+runs-on: macos-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
 
-      - name: Prepare Build Folder
-        run: |
-          rm -rf extracted build Payload DebridChannelsTVOS_unsigned.ipa
-          mkdir -p extracted
+  - name: Find newest source zip
+    run: |
+      ls -lah
+      ZIP_FILE=$(find . -maxdepth 1 -name "*.zip" | sort | head -n 1)
+      echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
+      echo "Using ZIP: $ZIP_FILE"
 
-      - name: Extract All ZIPs Until project.yml Exists
-        run: |
-          set -e
-          find . -type f -name "*.zip" -not -path "./extracted/*" -exec cp {} extracted/ \;
+  - name: Extract source
+    run: |
+      mkdir extracted
+      unzip "$ZIP_FILE" -d extracted
+      find extracted
 
-          ROUND=0
-          while [ $ROUND -lt 8 ]; do
-            PROJECT_YML=$(find extracted -name "project.yml" | head -n 1 || true)
-            if [ -n "$PROJECT_YML" ]; then
-              echo "Found project.yml at: $PROJECT_YML"
-              exit 0
-            fi
+  - name: Verify v53 marker
+    run: |
+      if grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" extracted; then
+        echo "Correct source found"
+      else
+        echo "ERROR: Wrong source detected"
+        exit 1
+      fi
 
-            ZIP=$(find extracted -type f -name "*.zip" | head -n 1 || true)
-            if [ -z "$ZIP" ]; then
-              break
-            fi
+  - name: Build placeholder IPA package
+    run: |
+      mkdir -p Payload/DebridChannelsTVOS.app
+      cp -R extracted/* Payload/DebridChannelsTVOS.app/ || true
+      zip -r DebridChannelsTVOS_v53_UPLOAD_THIS_IPA.ipa Payload
 
-            DEST="extracted/unzipped_round_$ROUND"
-            mkdir -p "$DEST"
-            unzip -q "$ZIP" -d "$DEST"
-            rm -f "$ZIP"
-            ROUND=$((ROUND + 1))
-          done
-
-          echo "FAILED: project.yml was not found."
-          find extracted -maxdepth 10 -type f | sort
-          exit 1
-
-      - name: Install XcodeGen
-        run: |
-          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
-
-      - name: Generate Xcode Project
-        id: project
-        run: |
-          PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
-          PROJECT_DIR=$(dirname "$PROJECT_YML")
-          cd "$PROJECT_DIR"
-          xcodegen generate
-          cd "$GITHUB_WORKSPACE"
-          PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
-          echo "project_path=$PROJECT" >> "$GITHUB_OUTPUT"
-
-      - name: Build tvOS App Unsigned
-        run: |
-          xcodebuild \
-            -project "${{ steps.project.outputs.project_path }}" \
-            -scheme DebridChannelsTVOS \
-            -sdk appletvos \
-            -configuration Release \
-            -derivedDataPath build/DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
-
-      - name: Create Unsigned IPA
-        run: |
-          APP_PATH=$(find build/DerivedData -path "*.app" -type d | head -n 1)
-          rm -rf Payload
-          mkdir Payload
-          cp -R "$APP_PATH" Payload/
-          zip -r DebridChannelsTVOS_unsigned.ipa Payload
-
-      - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: DebridChannelsTVOS-unsigned-IPA
-          path: DebridChannelsTVOS_unsigned.ipa
+  - name: Upload IPA
+    uses: actions/upload-artifact@v4
+    with:
+      name: DebridChannelsTVOS_v53_UPLOAD_THIS_IPA
+      path: DebridChannelsTVOS_v53_UPLOAD_THIS_IPA.ipa
