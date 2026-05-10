@@ -1,4 +1,4 @@
-name: 00 Build tvOS IPA From Source ZIP - CLEAN ONLY
+name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL
 
 on:
   workflow_dispatch:
@@ -16,39 +16,20 @@ jobs:
           rm -rf extracted build Payload *.ipa
           mkdir -p extracted
 
-      - name: Extract ONLY newest uploaded ZIP
+      - name: Extract newest source ZIP
         run: |
           ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: No ZIP file found in repo root."
+            exit 1
+          fi
+
           echo "Using ZIP: $ZIP_FILE"
           unzip -q "$ZIP_FILE" -d extracted
-          find extracted -maxdepth 5 -type f | sort
+          find extracted -maxdepth 6 -type f | sort
 
-      - name: Verify correct source marker
-        run: |
-          APP_SOURCE=$(find extracted -type d -name "Sources" | head -n 1)
-
-          echo "Checking source folder: $APP_SOURCE"
-
-          if [ -z "$APP_SOURCE" ]; then
-            echo "ERROR: Sources folder not found."
-            exit 1
-          fi
-
-          if grep -R "v45 premium logo" "$APP_SOURCE"; then
-            echo "ERROR: Old v45 app source detected. Stopping build."
-            exit 1
-          fi
-
-          if ! grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" "$APP_SOURCE"; then
-            echo "ERROR: New v53 marker not found in app source. Wrong source ZIP."
-            exit 1
-          fi
-
-      - name: Install XcodeGen
-        run: |
-          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
-
-      - name: Generate Xcode Project
+      - name: Find project.yml
         run: |
           PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
 
@@ -58,6 +39,25 @@ jobs:
           fi
 
           PROJECT_DIR=$(dirname "$PROJECT_YML")
+
+          echo "PROJECT_YML=$PROJECT_YML" >> $GITHUB_ENV
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+          echo "Using project.yml: $PROJECT_YML"
+          echo "Using project dir: $PROJECT_DIR"
+
+      - name: Show build/version markers
+        run: |
+          echo "Searching app source markers..."
+          find "$PROJECT_DIR" -type f \( -name "*.swift" -o -name "*.plist" -o -name "*.yml" \) -print
+          grep -RniE "Build v|TRUE SPLIT|LOCKED SPLIT|premium logo|blue glow|CFBundleShortVersionString|CFBundleVersion" "$PROJECT_DIR" || true
+
+      - name: Install XcodeGen
+        run: |
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: |
           cd "$PROJECT_DIR"
           xcodegen generate
 
@@ -69,6 +69,8 @@ jobs:
             echo "ERROR: Xcode project not found."
             exit 1
           fi
+
+          echo "Using Xcode project: $PROJECT"
 
           xcodebuild \
             -project "$PROJECT" \
@@ -90,16 +92,30 @@ jobs:
             exit 1
           fi
 
+          echo "Using built app: $APP_PATH"
+
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
 
-          /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist)
 
-          zip -r DebridChannelsTVOS_v53_UNSIGNED.ipa Payload
+          if [ -z "$EXECUTABLE" ]; then
+            echo "ERROR: CFBundleExecutable missing."
+            exit 1
+          fi
+
+          if [ ! -f "Payload/"*.app/"$EXECUTABLE" ]; then
+            echo "ERROR: Bundle executable file missing: $EXECUTABLE"
+            exit 1
+          fi
+
+          echo "Bundle executable: $EXECUTABLE"
+
+          zip -r DebridChannelsTVOS_UNSIGNED.ipa Payload
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DebridChannelsTVOS_v53_UNSIGNED
-          path: DebridChannelsTVOS_v53_UNSIGNED.ipa
+          name: DebridChannelsTVOS_UNSIGNED
+          path: DebridChannelsTVOS_UNSIGNED.ipa
