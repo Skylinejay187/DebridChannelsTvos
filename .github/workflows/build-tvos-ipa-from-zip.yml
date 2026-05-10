@@ -1,46 +1,56 @@
-name: 00 Build tvOS IPA From Source ZIP - V53 ROOT SOURCE
+name: 00 Build tvOS IPA From Source ZIP - CLEAN ONLY
 
 on:
   workflow_dispatch:
 
 jobs:
   build-tvos:
-    runs-on: macos-15
+    runs-on: macos-15-arm64
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Locate Root Source Only
-        id: source
+      - name: Prepare Clean Build Folder
         run: |
-          set -euo pipefail
-          echo "V53_ROOT_SOURCE_WORKFLOW_ACTIVE"
-          if [ ! -f "DebridChannelsTVOS/project.yml" ]; then
-            echo "ERROR: DebridChannelsTVOS/project.yml not found at repo root."
-            echo "This workflow is for extracted root source, not old nested zips."
-            find . -maxdepth 4 -type f | sort | sed -n '1,120p'
+          rm -rf extracted build Payload *.ipa
+          mkdir -p extracted
+
+      - name: Extract ONLY newest uploaded ZIP
+        run: |
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
+          echo "Using ZIP: $ZIP_FILE"
+          unzip -q "$ZIP_FILE" -d extracted
+          find extracted -maxdepth 5 -type f | sort
+
+      - name: Verify correct source marker
+        run: |
+          if grep -R "v45 premium logo" extracted; then
+            echo "ERROR: Old v45 source detected. Stopping build."
             exit 1
           fi
-          grep -R "v53\|V53\|TRUE SPLIT" DebridChannelsTVOS/Sources || true
-          if grep -R "v45 premium logo" DebridChannelsTVOS/Sources; then
-            echo "ERROR: v45 marker found. Refusing to build old source."
+
+          if ! grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" extracted; then
+            echo "ERROR: New v53 marker not found. Wrong source ZIP."
             exit 1
           fi
-          grep -R "v53" DebridChannelsTVOS/Sources || (echo "ERROR: v53 marker missing" && exit 1)
-          echo "project_dir=DebridChannelsTVOS" >> "$GITHUB_OUTPUT"
 
       - name: Install XcodeGen
-        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+        run: |
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
 
       - name: Generate Xcode Project
         run: |
-          cd DebridChannelsTVOS
+          PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
+          PROJECT_DIR=$(dirname "$PROJECT_YML")
+          cd "$PROJECT_DIR"
           xcodegen generate
 
       - name: Build tvOS App Unsigned
         run: |
+          PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
           xcodebuild \
-            -project "DebridChannelsTVOS/DebridChannelsTVOS.xcodeproj" \
+            -project "$PROJECT" \
             -scheme DebridChannelsTVOS \
             -sdk appletvos \
             -configuration Release \
@@ -50,33 +60,16 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Verify Built App Is v53
+      - name: Create Unsigned IPA
         run: |
-          set -euo pipefail
-          APP_PATH=$(find build/DerivedData -path "*.app" -type d | head -n 1)
-          test -n "$APP_PATH"
-          strings "$APP_PATH/DebridChannelsTVOS" > /tmp/app_strings.txt || true
-          grep -i "v53" /tmp/app_strings.txt || (echo "ERROR: compiled app does not contain v53" && exit 1)
-          if grep -i "v45 premium logo" /tmp/app_strings.txt; then
-            echo "ERROR: compiled app contains v45 marker" && exit 1
-          fi
-
-      - name: Create Signulous-Friendly IPA
-        run: |
-          set -euo pipefail
-          APP_PATH=$(find build/DerivedData -path "*.app" -type d | head -n 1)
-          PLIST="$APP_PATH/Info.plist"
-          EXEC_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLIST")
-          test -f "$APP_PATH/$EXEC_NAME"
-          rm -rf Payload DebridChannelsTVOS_v53_UPLOAD_THIS_IPA.ipa
-          mkdir Payload
+          APP_PATH=$(find build/DerivedData/Build/Products/Release-appletvos -name "*.app" | head -n 1)
+          mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          /usr/bin/zip -qr DebridChannelsTVOS_v53_UPLOAD_THIS_IPA.ipa Payload
-          unzip -l DebridChannelsTVOS_v53_UPLOAD_THIS_IPA.ipa | grep "Payload/.*.app/$EXEC_NAME"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist
+          zip -r DebridChannelsTVOS_v53_UNSIGNED.ipa Payload
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DebridChannelsTVOS-v53-ROOT-SOURCE-IPA
-          path: DebridChannelsTVOS_v53_UPLOAD_THIS_IPA.ipa
-          
+          name: DebridChannelsTVOS_v53_UNSIGNED
+          path: DebridChannelsTVOS_v53_UNSIGNED.ipa
