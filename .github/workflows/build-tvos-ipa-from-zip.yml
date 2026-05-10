@@ -1,1 +1,58 @@
+name: Build tvOS IPA From Source ZIP
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build-tvos:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Show Repository Files
+        run: ls -R
+
+      - name: Unzip tvOS Source Project
+        run: |
+          mkdir extracted
+          unzip source_zip/DebridChannelsTVOS_Source.zip -d extracted
+
+      - name: Locate Xcode Project
+        run: |
+          find extracted -name "*.xcodeproj"
+
+      - name: Build tvOS App
+        run: |
+          cd extracted
+
+          PROJECT=$(find . -name "*.xcodeproj" | head -n 1)
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme DebridChannelsTVOS \
+            -sdk appletvos \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Find Built .app
+        run: |
+          find ~/Library/Developer/Xcode/DerivedData -name "*.app"
+
+      - name: Package IPA
+        run: |
+          mkdir Payload
+
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+
+          cp -R "$APP_PATH" Payload/
+
+          zip -r DebridChannelsTVOS_unsigned.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DebridChannelsTVOS-IPA
+          path: DebridChannelsTVOS_unsigned.ipa
