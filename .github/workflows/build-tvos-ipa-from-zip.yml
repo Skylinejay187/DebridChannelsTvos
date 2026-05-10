@@ -11,23 +11,39 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Show Repository Files
-        run: find . -maxdepth 4 -type f | sort
-
-      - name: Find Source ZIP
-        id: findzip
+      - name: Prepare Build Folder
         run: |
-          ZIP_FILE=$(find . -type f -name "*.zip" | head -n 1)
-          echo "FOUND ZIP: $ZIP_FILE"
-          if [ -z "$ZIP_FILE" ]; then exit 1; fi
-          echo "zip_path=$ZIP_FILE" >> "$GITHUB_OUTPUT"
+          rm -rf extracted build Payload DebridChannelsTVOS_unsigned.ipa
+          mkdir -p extracted
 
-      - name: Extract Source ZIP
+      - name: Extract All ZIPs Until project.yml Exists
         run: |
-          rm -rf extracted
-          mkdir extracted
-          unzip -q "${{ steps.findzip.outputs.zip_path }}" -d extracted
-          find extracted -maxdepth 5 -type f | sort
+          set -e
+          find . -type f -name "*.zip" -not -path "./extracted/*" -exec cp {} extracted/ \;
+
+          ROUND=0
+          while [ $ROUND -lt 8 ]; do
+            PROJECT_YML=$(find extracted -name "project.yml" | head -n 1 || true)
+            if [ -n "$PROJECT_YML" ]; then
+              echo "Found project.yml at: $PROJECT_YML"
+              exit 0
+            fi
+
+            ZIP=$(find extracted -type f -name "*.zip" | head -n 1 || true)
+            if [ -z "$ZIP" ]; then
+              break
+            fi
+
+            DEST="extracted/unzipped_round_$ROUND"
+            mkdir -p "$DEST"
+            unzip -q "$ZIP" -d "$DEST"
+            rm -f "$ZIP"
+            ROUND=$((ROUND + 1))
+          done
+
+          echo "FAILED: project.yml was not found."
+          find extracted -maxdepth 10 -type f | sort
+          exit 1
 
       - name: Install XcodeGen
         run: |
@@ -60,7 +76,7 @@ jobs:
       - name: Create Unsigned IPA
         run: |
           APP_PATH=$(find build/DerivedData -path "*.app" -type d | head -n 1)
-          rm -rf Payload DebridChannelsTVOS_unsigned.ipa
+          rm -rf Payload
           mkdir Payload
           cp -R "$APP_PATH" Payload/
           zip -r DebridChannelsTVOS_unsigned.ipa Payload
