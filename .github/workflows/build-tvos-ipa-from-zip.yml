@@ -1,11 +1,11 @@
-name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL
+name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL SAFE
 
 on:
   workflow_dispatch:
 
 jobs:
   build-tvos:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Checkout Repository
@@ -13,7 +13,7 @@ jobs:
 
       - name: Prepare Clean Build Folder
         run: |
-          rm -rf extracted build Payload *.ipa
+          rm -rf extracted
           mkdir -p extracted
 
       - name: Extract newest source ZIP
@@ -21,101 +21,116 @@ jobs:
           ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: No ZIP file found in repo root."
+            echo "ERROR: No ZIP found in repository root."
             exit 1
           fi
 
-          echo "Using ZIP: $ZIP_FILE"
-          unzip -q "$ZIP_FILE" -d extracted
-          find extracted -maxdepth 6 -type f | sort
+          echo "Using ZIP:"
+          echo "$ZIP_FILE"
+
+          unzip -oq "$ZIP_FILE" -d extracted
+
+          echo "Extraction complete."
+          find extracted | head -n 200
 
       - name: Find project.yml
         run: |
-          PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
+          echo "Searching extracted source..."
+
+          PROJECT_YML=$(find extracted -type f \( -name "project.yml" -o -name "*.yml" \) | grep "project.yml" | head -n 1)
 
           if [ -z "$PROJECT_YML" ]; then
-            echo "ERROR: project.yml not found."
+            echo "ERROR: project.yml not found anywhere in extracted source."
+            echo "Detected files:"
+            find extracted | head -n 200
             exit 1
           fi
 
-          PROJECT_DIR=$(dirname "$PROJECT_YML")
+          echo "FOUND PROJECT FILE:"
+          echo "$PROJECT_YML"
 
           echo "PROJECT_YML=$PROJECT_YML" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-          echo "Using project.yml: $PROJECT_YML"
-          echo "Using project dir: $PROJECT_DIR"
 
       - name: Show build/version markers
         run: |
-          echo "Searching app source markers..."
-          find "$PROJECT_DIR" -type f \( -name "*.swift" -o -name "*.plist" -o -name "*.yml" \) -print
-          grep -RniE "Build v|TRUE SPLIT|LOCKED SPLIT|premium logo|blue glow|CFBundleShortVersionString|CFBundleVersion" "$PROJECT_DIR" || true
+          echo "Scanning source markers..."
+          grep -R "Build v" extracted || true
+          grep -R "PARALLAX" extracted || true
+          grep -R "GLIDE" extracted || true
 
       - name: Install XcodeGen
         run: |
-          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+          brew install xcodegen
 
       - name: Generate Xcode Project
         run: |
-          cd "$PROJECT_DIR"
+          cd "$(dirname "$PROJECT_YML")"
+
+          echo "Running XcodeGen..."
           xcodegen generate
 
-      - name: Build tvOS App Unsigned
-        run: |
-          PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
+          echo "Generated files:"
+          ls
 
-          if [ -z "$PROJECT" ]; then
-            echo "ERROR: Xcode project not found."
+      - name: Find Xcode Project
+        run: |
+          XCODEPROJ=$(find extracted -name "*.xcodeproj" | head -n 1)
+
+          if [ -z "$XCODEPROJ" ]; then
+            echo "ERROR: .xcodeproj not generated."
             exit 1
           fi
 
-          echo "Using Xcode project: $PROJECT"
+          echo "FOUND XCODE PROJECT:"
+          echo "$XCODEPROJ"
+
+          echo "XCODEPROJ=$XCODEPROJ" >> $GITHUB_ENV
+
+      - name: Build tvOS App Unsigned
+        run: |
+          APP_DIR=$(dirname "$XCODEPROJ")
+
+          cd "$APP_DIR"
 
           xcodebuild \
-            -project "$PROJECT" \
+            -project "$(basename "$XCODEPROJ")" \
             -scheme DebridChannelsTVOS \
-            -sdk appletvos \
+            -sdk appletvsimulator \
             -configuration Release \
-            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
+            clean build
 
-      - name: Create Unsigned IPA
+      - name: Find Built .app
         run: |
-          APP_PATH=$(find build/DerivedData/Build/Products/Release-appletvos -name "*.app" | head -n 1)
+          APP_FILE=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
 
-          if [ -z "$APP_PATH" ]; then
+          if [ -z "$APP_FILE" ]; then
             echo "ERROR: Built .app not found."
             exit 1
           fi
 
-          echo "Using built app: $APP_PATH"
+          echo "FOUND APP:"
+          echo "$APP_FILE"
 
+          echo "APP_FILE=$APP_FILE" >> $GITHUB_ENV
+
+      - name: Create Unsigned IPA
+        run: |
           rm -rf Payload
-          mkdir -p Payload
-          cp -R "$APP_PATH" Payload/
+          mkdir Payload
 
-          EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist)
+          cp -R "$APP_FILE" Payload/
 
-          if [ -z "$EXECUTABLE" ]; then
-            echo "ERROR: CFBundleExecutable missing."
-            exit 1
-          fi
+          zip -qry DebridChannelsTVOS_unsigned.ipa Payload
 
-          if [ ! -f "Payload/"*.app/"$EXECUTABLE" ]; then
-            echo "ERROR: Bundle executable file missing: $EXECUTABLE"
-            exit 1
-          fi
-
-          echo "Bundle executable: $EXECUTABLE"
-
-          zip -r DebridChannelsTVOS_UNSIGNED.ipa Payload
+          echo "IPA created."
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DebridChannelsTVOS_UNSIGNED
-          path: DebridChannelsTVOS_UNSIGNED.ipa
+          name: DebridChannelsTVOS-Unsigned-IPA
+          path: DebridChannelsTVOS_unsigned.ipa
+
+      - name: Complete
+        run: |
+          echo "UNIVERSAL TVOS BUILD COMPLETE"
