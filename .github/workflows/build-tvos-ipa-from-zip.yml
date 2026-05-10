@@ -1,4 +1,4 @@
-name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL SAFE
+name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL RECURSIVE
 
 on:
   workflow_dispatch:
@@ -16,47 +16,64 @@ jobs:
           rm -rf extracted
           mkdir -p extracted
 
-      - name: Extract newest source ZIP
+      - name: Find newest ZIP
         run: |
           ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: No ZIP found in repository root."
+            echo "ERROR: No ZIP found."
             exit 1
           fi
 
+          echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
           echo "Using ZIP:"
           echo "$ZIP_FILE"
 
+      - name: Extract root ZIP
+        run: |
           unzip -oq "$ZIP_FILE" -d extracted
 
-          echo "Extraction complete."
-          find extracted | head -n 200
+      - name: Extract nested ZIPs recursively
+        run: |
+          while true; do
+
+            INNER_ZIP=$(find extracted -type f -name "*.zip" | head -n 1)
+
+            if [ -z "$INNER_ZIP" ]; then
+              echo "No more nested ZIPs."
+              break
+            fi
+
+            echo "Extracting nested ZIP:"
+            echo "$INNER_ZIP"
+
+            TARGET_DIR=$(dirname "$INNER_ZIP")/nested
+
+            mkdir -p "$TARGET_DIR"
+
+            unzip -oq "$INNER_ZIP" -d "$TARGET_DIR"
+
+            rm -f "$INNER_ZIP"
+
+          done
+
+      - name: Show extracted structure
+        run: |
+          find extracted | head -n 300
 
       - name: Find project.yml
         run: |
-          echo "Searching extracted source..."
-
-          PROJECT_YML=$(find extracted -type f \( -name "project.yml" -o -name "*.yml" \) | grep "project.yml" | head -n 1)
+          PROJECT_YML=$(find extracted -type f -name "project.yml" | head -n 1)
 
           if [ -z "$PROJECT_YML" ]; then
-            echo "ERROR: project.yml not found anywhere in extracted source."
-            echo "Detected files:"
-            find extracted | head -n 200
+            echo "ERROR: project.yml not found."
             exit 1
           fi
 
-          echo "FOUND PROJECT FILE:"
+          echo "FOUND PROJECT:"
           echo "$PROJECT_YML"
 
           echo "PROJECT_YML=$PROJECT_YML" >> $GITHUB_ENV
-
-      - name: Show build/version markers
-        run: |
-          echo "Scanning source markers..."
-          grep -R "Build v" extracted || true
-          grep -R "PARALLAX" extracted || true
-          grep -R "GLIDE" extracted || true
 
       - name: Install XcodeGen
         run: |
@@ -66,13 +83,9 @@ jobs:
         run: |
           cd "$(dirname "$PROJECT_YML")"
 
-          echo "Running XcodeGen..."
           xcodegen generate
 
-          echo "Generated files:"
-          ls
-
-      - name: Find Xcode Project
+      - name: Find generated Xcode project
         run: |
           XCODEPROJ=$(find extracted -name "*.xcodeproj" | head -n 1)
 
@@ -86,7 +99,7 @@ jobs:
 
           echo "XCODEPROJ=$XCODEPROJ" >> $GITHUB_ENV
 
-      - name: Build tvOS App Unsigned
+      - name: Build tvOS app unsigned
         run: |
           APP_DIR=$(dirname "$XCODEPROJ")
 
@@ -100,21 +113,18 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             clean build
 
-      - name: Find Built .app
+      - name: Find built app
         run: |
           APP_FILE=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
 
           if [ -z "$APP_FILE" ]; then
-            echo "ERROR: Built .app not found."
+            echo "ERROR: Built app not found."
             exit 1
           fi
 
-          echo "FOUND APP:"
-          echo "$APP_FILE"
-
           echo "APP_FILE=$APP_FILE" >> $GITHUB_ENV
 
-      - name: Create Unsigned IPA
+      - name: Create IPA
         run: |
           rm -rf Payload
           mkdir Payload
@@ -123,14 +133,8 @@ jobs:
 
           zip -qry DebridChannelsTVOS_unsigned.ipa Payload
 
-          echo "IPA created."
-
-      - name: Upload IPA Artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: DebridChannelsTVOS-Unsigned-IPA
           path: DebridChannelsTVOS_unsigned.ipa
-
-      - name: Complete
-        run: |
-          echo "UNIVERSAL TVOS BUILD COMPLETE"
