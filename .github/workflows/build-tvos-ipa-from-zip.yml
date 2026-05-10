@@ -25,13 +25,22 @@ jobs:
 
       - name: Verify correct source marker
         run: |
-          if grep -R "v45 premium logo" extracted; then
-            echo "ERROR: Old v45 source detected. Stopping build."
+          APP_SOURCE=$(find extracted -type d -name "Sources" | head -n 1)
+
+          echo "Checking source folder: $APP_SOURCE"
+
+          if [ -z "$APP_SOURCE" ]; then
+            echo "ERROR: Sources folder not found."
             exit 1
           fi
 
-          if ! grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" extracted; then
-            echo "ERROR: New v53 marker not found. Wrong source ZIP."
+          if grep -R "v45 premium logo" "$APP_SOURCE"; then
+            echo "ERROR: Old v45 app source detected. Stopping build."
+            exit 1
+          fi
+
+          if ! grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" "$APP_SOURCE"; then
+            echo "ERROR: New v53 marker not found in app source. Wrong source ZIP."
             exit 1
           fi
 
@@ -42,6 +51,12 @@ jobs:
       - name: Generate Xcode Project
         run: |
           PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
+
+          if [ -z "$PROJECT_YML" ]; then
+            echo "ERROR: project.yml not found."
+            exit 1
+          fi
+
           PROJECT_DIR=$(dirname "$PROJECT_YML")
           cd "$PROJECT_DIR"
           xcodegen generate
@@ -49,6 +64,12 @@ jobs:
       - name: Build tvOS App Unsigned
         run: |
           PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
+
+          if [ -z "$PROJECT" ]; then
+            echo "ERROR: Xcode project not found."
+            exit 1
+          fi
+
           xcodebuild \
             -project "$PROJECT" \
             -scheme DebridChannelsTVOS \
@@ -63,9 +84,18 @@ jobs:
       - name: Create Unsigned IPA
         run: |
           APP_PATH=$(find build/DerivedData/Build/Products/Release-appletvos -name "*.app" | head -n 1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Built .app not found."
+            exit 1
+          fi
+
+          rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
+
           /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist
+
           zip -r DebridChannelsTVOS_v53_UNSIGNED.ipa Payload
 
       - name: Upload IPA Artifact
