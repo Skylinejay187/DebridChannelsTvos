@@ -1,75 +1,80 @@
 name: 00 Build tvOS IPA From Source ZIP - CLEAN ONLY
 
 on:
-  workflow_dispatch:
+workflow_dispatch:
 
 jobs:
-  build-tvos:
-    runs-on: macos-15-arm64
+build-tvos:
+runs-on: macos-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v4
 
-      - name: Prepare Clean Build Folder
-        run: |
-          rm -rf extracted build Payload *.ipa
-          mkdir -p extracted
+  - name: Prepare Clean Build Folder
+    run: |
+      rm -rf extracted build Payload *.ipa
+      mkdir -p extracted
 
-      - name: Extract ONLY newest uploaded ZIP
-        run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
-          echo "Using ZIP: $ZIP_FILE"
-          unzip -q "$ZIP_FILE" -d extracted
-          find extracted -maxdepth 5 -type f | sort
+  - name: Extract ONLY newest uploaded ZIP
+    run: |
+      ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
+      echo "Using ZIP: $ZIP_FILE"
+      unzip -q "$ZIP_FILE" -d extracted
+      find extracted -maxdepth 5 -type f | sort
 
-      - name: Verify correct source marker
-        run: |
-          if grep -R "v45 premium logo" extracted; then
-            echo "ERROR: Old v45 source detected. Stopping build."
-            exit 1
-          fi
+  - name: Verify correct source marker
+    run: |
+      if grep -R "v45 premium logo" extracted; then
+        echo "ERROR: Old v45 source detected. Stopping build."
+        exit 1
+      fi
 
-          if ! grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" extracted; then
-            echo "ERROR: New v53 marker not found. Wrong source ZIP."
-            exit 1
-          fi
+      if ! grep -R "v53 TRUE SPLIT ACTIVE ROOT SOURCE" extracted; then
+        echo "ERROR: New v53 marker not found. Wrong source ZIP."
+        exit 1
+      fi
 
-      - name: Install XcodeGen
-        run: |
-          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+  - name: Install XcodeGen
+    run: |
+      brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
 
-      - name: Generate Xcode Project
-        run: |
-          PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
-          PROJECT_DIR=$(dirname "$PROJECT_YML")
-          cd "$PROJECT_DIR"
-          xcodegen generate
+  - name: Generate Xcode Project
+    run: |
+      PROJECT_YML=$(find extracted -name "project.yml" | head -n 1)
+      PROJECT_DIR=$(dirname "$PROJECT_YML")
+      cd "$PROJECT_DIR"
+      xcodegen generate
 
-      - name: Build tvOS App Unsigned
-        run: |
-          PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
-          xcodebuild \
-            -project "$PROJECT" \
-            -scheme DebridChannelsTVOS \
-            -sdk appletvos \
-            -configuration Release \
-            -derivedDataPath build/DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build
+  - name: Build tvOS App Unsigned
+    run: |
+      PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
 
-      - name: Create Unsigned IPA
-        run: |
-          APP_PATH=$(find build/DerivedData/Build/Products/Release-appletvos -name "*.app" | head -n 1)
-          mkdir -p Payload
-          cp -R "$APP_PATH" Payload/
-          /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist
-          zip -r DebridChannelsTVOS_v53_UNSIGNED.ipa Payload
+      xcodebuild \
+        -project "$PROJECT" \
+        -scheme DebridChannelsTVOS \
+        -sdk appletvos \
+        -configuration Release \
+        -derivedDataPath build/DerivedData \
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGNING_REQUIRED=NO \
+        CODE_SIGN_IDENTITY="" \
+        build
 
-      - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: DebridChannelsTVOS_v53_UNSIGNED
-          path: DebridChannelsTVOS_v53_UNSIGNED.ipa
+  - name: Create Unsigned IPA
+    run: |
+      APP_PATH=$(find build/DerivedData/Build/Products/Release-appletvos -name "*.app" | head -n 1)
+
+      mkdir -p Payload
+      cp -R "$APP_PATH" Payload/
+
+      /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" Payload/*.app/Info.plist
+
+      cd Payload/..
+      zip -r DebridChannelsTVOS_v53_UNSIGNED.ipa Payload
+
+  - name: Upload IPA Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: DebridChannelsTVOS_v53_UNSIGNED
+      path: DebridChannelsTVOS_v53_UNSIGNED.ipa
