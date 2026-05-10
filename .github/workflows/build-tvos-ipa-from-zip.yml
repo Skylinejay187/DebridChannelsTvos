@@ -1,4 +1,4 @@
-name: Build tvOS IPA From Source ZIP
+name: Build tvOS IPA From ZIP
 
 on:
   workflow_dispatch:
@@ -12,42 +12,79 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Show Repository Files
-        run: ls -R
+        run: |
+          echo "ROOT FILES:"
+          ls -R
 
-      - name: Unzip tvOS Source Project
+      - name: Find Source ZIP
+        id: findzip
+        run: |
+          ZIP_FILE=$(find . -type f -name "*.zip" | head -n 1)
+
+          echo "FOUND ZIP:"
+          echo "$ZIP_FILE"
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "NO ZIP FILE FOUND"
+            exit 1
+          fi
+
+          echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
+
+      - name: Extract Source ZIP
         run: |
           mkdir extracted
-          unzip source_zip/DebridChannelsTVOS_Source.zip -d extracted
+
+          unzip "${{ steps.findzip.outputs.zip_path }}" -d extracted
+
+          echo "EXTRACTED FILES:"
+          ls -R extracted
 
       - name: Locate Xcode Project
+        id: locateproject
         run: |
-          find extracted -name "*.xcodeproj"
+          PROJECT=$(find extracted -name "*.xcodeproj" | head -n 1)
+
+          echo "FOUND PROJECT:"
+          echo "$PROJECT"
+
+          if [ -z "$PROJECT" ]; then
+            echo "NO XCODE PROJECT FOUND"
+            exit 1
+          fi
+
+          echo "project_path=$PROJECT" >> $GITHUB_OUTPUT
 
       - name: Build tvOS App
         run: |
-          cd extracted
-
-          PROJECT=$(find . -name "*.xcodeproj" | head -n 1)
-
           xcodebuild \
-            -project "$PROJECT" \
+            -project "${{ steps.locateproject.outputs.project_path }}" \
             -scheme DebridChannelsTVOS \
             -sdk appletvos \
             -configuration Release \
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Find Built .app
+      - name: Find Built App
+        id: findapp
         run: |
-          find ~/Library/Developer/Xcode/DerivedData -name "*.app"
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
 
-      - name: Package IPA
+          echo "FOUND APP:"
+          echo "$APP_PATH"
+
+          if [ -z "$APP_PATH" ]; then
+            echo "NO BUILT APP FOUND"
+            exit 1
+          fi
+
+          echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
+
+      - name: Create IPA
         run: |
           mkdir Payload
 
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
-
-          cp -R "$APP_PATH" Payload/
+          cp -R "${{ steps.findapp.outputs.app_path }}" Payload/
 
           zip -r DebridChannelsTVOS_unsigned.ipa Payload
 
