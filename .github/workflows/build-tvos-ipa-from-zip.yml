@@ -3,6 +3,13 @@ name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL DEVICE BUILD
 on:
   workflow_dispatch:
 
+  push:
+    branches:
+      - main
+    paths:
+      - "*.zip"
+      - ".github/workflows/**"
+
 jobs:
   build-tvos:
     runs-on: macos-15
@@ -11,17 +18,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
       - name: Prepare Clean Build Folder
         run: |
           rm -rf extracted
+          rm -rf build
+          rm -rf Payload
+          rm -f DebridChannelsTVOS_unsigned.ipa
           mkdir -p extracted
 
       - name: Find newest ZIP
         run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | sort | tail -n 1)
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" -print0 | xargs -0 ls -t | head -n 1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: No ZIP found."
+            echo "ERROR: No ZIP found in repository root."
             exit 1
           fi
 
@@ -37,7 +52,6 @@ jobs:
       - name: Extract nested ZIPs recursively
         run: |
           while true; do
-
             INNER_ZIP=$(find extracted -type f -name "*.zip" | head -n 1)
 
             if [ -z "$INNER_ZIP" ]; then
@@ -48,20 +62,17 @@ jobs:
             echo "Extracting nested ZIP:"
             echo "$INNER_ZIP"
 
-            TARGET_DIR=$(dirname "$INNER_ZIP")/nested
-
+            TARGET_DIR="$(dirname "$INNER_ZIP")/nested"
             mkdir -p "$TARGET_DIR"
 
             unzip -oq "$INNER_ZIP" -d "$TARGET_DIR"
-
             rm -f "$INNER_ZIP"
-
           done
 
       - name: Show extracted structure
         run: |
           echo "Extracted files:"
-          find extracted | head -n 300
+          find extracted | head -n 500
 
       - name: Find project.yml
         run: |
@@ -79,7 +90,12 @@ jobs:
 
       - name: Install XcodeGen
         run: |
-          brew install xcodegen
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          else
+            echo "XcodeGen already installed."
+            xcodegen --version
+          fi
 
       - name: Generate Xcode Project
         run: |
@@ -140,6 +156,9 @@ jobs:
           mkdir -p Payload
 
           cp -R "$APP_FILE" Payload/
+
+          echo "Payload contents:"
+          find Payload | head -n 100
 
       - name: Create unsigned IPA
         run: |
