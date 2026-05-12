@@ -31,18 +31,23 @@ jobs:
           rm -f DebridChannelsTVOS_unsigned.ipa
           mkdir -p extracted
 
-      - name: Find newest ZIP
+      - name: Show ZIP files in repository
         run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" -print0 | xargs -0 ls -t | head -n 1)
+          echo "Available ZIP files:"
+          find . -maxdepth 1 -type f -name "*.zip" | sort -V
+
+      - name: Find highest version tvOS ZIP
+        run: |
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name "000_DebridChannels_tvOS_READY_UPLOAD_v*.zip" | sort -V | tail -n 1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: No ZIP found in repository root."
+            echo "ERROR: No tvOS source ZIP found."
             exit 1
           fi
 
           echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
 
-          echo "Using ZIP:"
+          echo "Using highest version ZIP:"
           echo "$ZIP_FILE"
 
       - name: Extract root ZIP
@@ -52,6 +57,7 @@ jobs:
       - name: Extract nested ZIPs recursively
         run: |
           while true; do
+
             INNER_ZIP=$(find extracted -type f -name "*.zip" | head -n 1)
 
             if [ -z "$INNER_ZIP" ]; then
@@ -63,10 +69,13 @@ jobs:
             echo "$INNER_ZIP"
 
             TARGET_DIR="$(dirname "$INNER_ZIP")/nested"
+
             mkdir -p "$TARGET_DIR"
 
             unzip -oq "$INNER_ZIP" -d "$TARGET_DIR"
+
             rm -f "$INNER_ZIP"
+
           done
 
       - name: Show extracted structure
