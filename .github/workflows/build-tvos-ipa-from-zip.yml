@@ -140,6 +140,7 @@ jobs:
             -sdk appletvos \
             -configuration Release \
             -derivedDataPath "$GITHUB_WORKSPACE/build/DerivedData" \
+            ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -178,3 +179,4 @@ jobs:
         with:
           name: DebridChannelsTVOS-Unsigned-IPA
           path: DebridChannelsTVOS_unsigned.ipa
+          
