@@ -46,7 +46,6 @@ jobs:
           fi
 
           echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
-
           echo "Using highest version ZIP:"
           echo "$ZIP_FILE"
 
@@ -57,7 +56,6 @@ jobs:
       - name: Extract nested ZIPs recursively
         run: |
           while true; do
-
             INNER_ZIP=$(find extracted -type f -name "*.zip" | head -n 1)
 
             if [ -z "$INNER_ZIP" ]; then
@@ -69,13 +67,9 @@ jobs:
             echo "$INNER_ZIP"
 
             TARGET_DIR="$(dirname "$INNER_ZIP")/nested"
-
             mkdir -p "$TARGET_DIR"
-
             unzip -oq "$INNER_ZIP" -d "$TARGET_DIR"
-
             rm -f "$INNER_ZIP"
-
           done
 
       - name: Show extracted structure
@@ -94,7 +88,6 @@ jobs:
 
           echo "FOUND PROJECT:"
           echo "$PROJECT_YML"
-
           echo "PROJECT_YML=$PROJECT_YML" >> $GITHUB_ENV
 
       - name: Install XcodeGen
@@ -109,9 +102,7 @@ jobs:
       - name: Generate Xcode Project
         run: |
           PROJECT_DIR=$(dirname "$PROJECT_YML")
-
           cd "$PROJECT_DIR"
-
           xcodegen generate
 
       - name: Find generated Xcode project
@@ -125,13 +116,11 @@ jobs:
 
           echo "FOUND XCODE PROJECT:"
           echo "$XCODEPROJ"
-
           echo "XCODEPROJ=$XCODEPROJ" >> $GITHUB_ENV
 
       - name: Build tvOS DEVICE app unsigned
         run: |
           APP_DIR=$(dirname "$XCODEPROJ")
-
           cd "$APP_DIR"
 
           xcodebuild \
@@ -157,8 +146,23 @@ jobs:
 
           echo "FOUND APP:"
           echo "$APP_FILE"
-
           echo "APP_FILE=$APP_FILE" >> $GITHUB_ENV
+
+      - name: Verify compiled app icon assets
+        run: |
+          echo "Checking built app icon configuration..."
+          plutil -p "$APP_FILE/Info.plist" | grep -i "Icon\|AppIcon" || true
+
+          echo "Checking Assets.car exists..."
+          if [ ! -f "$APP_FILE/Assets.car" ]; then
+            echo "ERROR: Assets.car missing from app bundle."
+            exit 1
+          fi
+
+          ls -lh "$APP_FILE/Assets.car"
+
+          echo "Checking app bundle resources:"
+          find "$APP_FILE" -maxdepth 2 | grep -i "icon\|asset\|brand" || true
 
       - name: Create Payload
         run: |
@@ -179,4 +183,3 @@ jobs:
         with:
           name: DebridChannelsTVOS-Unsigned-IPA
           path: DebridChannelsTVOS_unsigned.ipa
-          
