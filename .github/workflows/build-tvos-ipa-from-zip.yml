@@ -1,4 +1,4 @@
-name: 00 Build tvOS IPA From Source ZIP - UNIVERSAL DEVICE BUILD
+name: 00 Build tvOS IPA From Source ZIP - ANY ZIP
 
 on:
   workflow_dispatch:
@@ -31,155 +31,125 @@ jobs:
           rm -f DebridChannelsTVOS_unsigned.ipa
           mkdir -p extracted
 
-      - name: Show ZIP files in repository
+      - name: Find newest ZIP in repository root
+        id: findzip
         run: |
           echo "Available ZIP files:"
-          find . -maxdepth 1 -type f -name "*.zip" | sort -V
+          find . -maxdepth 1 -type f -name "*.zip" -print | sort
 
-      - name: Find highest version tvOS ZIP
-        run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name "000_DebridChannels_tvOS_READY_UPLOAD_v*.zip" | sort -V | tail -n 1)
+          ZIP_FILE="$(ls -t ./*.zip 2>/dev/null | head -n 1 || true)"
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: No tvOS source ZIP found."
+            echo "ERROR: No ZIP file found in repository root."
             exit 1
           fi
 
-          echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
+          echo "Using ZIP: $ZIP_FILE"
+          echo "zip_file=$ZIP_FILE" >> "$GITHUB_OUTPUT"
 
-          echo "Using highest version ZIP:"
-          echo "$ZIP_FILE"
-
-      - name: Extract root ZIP
+      - name: Extract Source ZIP
         run: |
-          unzip -oq "$ZIP_FILE" -d extracted
+          unzip -q "${{ steps.findzip.outputs.zip_file }}" -d extracted
 
-      - name: Extract nested ZIPs recursively
+          echo "Extracted contents:"
+          find extracted -maxdepth 3 -type f | head -200
+
+      - name: Locate Xcode Project
+        id: locate
         run: |
-          while true; do
+          PROJECT_FILE="$(find extracted -name "*.xcodeproj" -type d | head -n 1)"
+          WORKSPACE_FILE="$(find extracted -name "*.xcworkspace" -type d | head -n 1)"
 
-            INNER_ZIP=$(find extracted -type f -name "*.zip" | head -n 1)
-
-            if [ -z "$INNER_ZIP" ]; then
-              echo "No more nested ZIPs."
-              break
-            fi
-
-            echo "Extracting nested ZIP:"
-            echo "$INNER_ZIP"
-
-            TARGET_DIR="$(dirname "$INNER_ZIP")/nested"
-
-            mkdir -p "$TARGET_DIR"
-
-            unzip -oq "$INNER_ZIP" -d "$TARGET_DIR"
-
-            rm -f "$INNER_ZIP"
-
-          done
-
-      - name: Show extracted structure
-        run: |
-          echo "Extracted files:"
-          find extracted | head -n 500
-
-      - name: Find project.yml
-        run: |
-          PROJECT_YML=$(find extracted -type f -name "project.yml" | head -n 1)
-
-          if [ -z "$PROJECT_YML" ]; then
-            echo "ERROR: project.yml not found."
-            exit 1
-          fi
-
-          echo "FOUND PROJECT:"
-          echo "$PROJECT_YML"
-
-          echo "PROJECT_YML=$PROJECT_YML" >> $GITHUB_ENV
-
-      - name: Install XcodeGen
-        run: |
-          if ! command -v xcodegen >/dev/null 2>&1; then
-            brew install xcodegen
+          if [ -n "$WORKSPACE_FILE" ]; then
+            echo "Found workspace: $WORKSPACE_FILE"
+            echo "build_type=workspace" >> "$GITHUB_OUTPUT"
+            echo "build_file=$WORKSPACE_FILE" >> "$GITHUB_OUTPUT"
+          elif [ -n "$PROJECT_FILE" ]; then
+            echo "Found project: $PROJECT_FILE"
+            echo "build_type=project" >> "$GITHUB_OUTPUT"
+            echo "build_file=$PROJECT_FILE" >> "$GITHUB_OUTPUT"
           else
-            echo "XcodeGen already installed."
-            xcodegen --version
-          fi
-
-      - name: Generate Xcode Project
-        run: |
-          PROJECT_DIR=$(dirname "$PROJECT_YML")
-
-          cd "$PROJECT_DIR"
-
-          # Clear out any stale local project structures to avoid conflicts
-          rm -rf *.xcodeproj
-          
-          xcodegen generate
-
-      - name: Find generated Xcode project
-        run: |
-          XCODEPROJ=$(find extracted -name "*.xcodeproj" | head -n 1)
-
-          if [ -z "$XCODEPROJ" ]; then
-            echo "ERROR: .xcodeproj not generated."
+            echo "ERROR: No .xcodeproj or .xcworkspace found after extraction."
             exit 1
           fi
 
-          echo "FOUND XCODE PROJECT:"
-          echo "$XCODEPROJ"
-
-          echo "XCODEPROJ=$XCODEPROJ" >> $GITHUB_ENV
-
-      - name: Build tvOS DEVICE app unsigned
+      - name: Detect Scheme
+        id: scheme
         run: |
-          APP_DIR=$(dirname "$XCODEPROJ")
+          BUILD_FILE="${{ steps.locate.outputs.build_file }}"
+          BUILD_TYPE="${{ steps.locate.outputs.build_type }}"
 
-          cd "$APP_DIR"
+          if [ "$BUILD_TYPE" = "workspace" ]; then
+            xcodebuild -list -workspace "$BUILD_FILE"
+            SCHEME="$(xcodebuild -list -workspace "$BUILD_FILE" | awk '/Schemes:/{flag=1;next} flag && NF {print $1; exit}')"
+          else
+            xcodebuild -list -project "$BUILD_FILE"
+            SCHEME="$(xcodebuild -list -project "$BUILD_FILE" | awk '/Schemes:/{flag=1;next} flag && NF {print $1; exit}')"
+          fi
 
-          xcodebuild \
-            -project "$(basename "$XCODEPROJ")" \
-            -scheme DebridChannelsTVOS \
-            -sdk appletvos \
-            -configuration Release \
-            -derivedDataPath "$GITHUB_WORKSPACE/build/DerivedData" \
-            ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            clean build
-
-      - name: Find built app
-        run: |
-          APP_FILE=$(find "$GITHUB_WORKSPACE/build/DerivedData/Build/Products/Release-appletvos" -name "*.app" | head -n 1)
-
-          if [ -z "$APP_FILE" ]; then
-            echo "ERROR: Built tvOS device app not found."
+          if [ -z "$SCHEME" ]; then
+            echo "ERROR: Could not detect Xcode scheme."
             exit 1
           fi
 
-          echo "FOUND APP:"
-          echo "$APP_FILE"
+          echo "Using scheme: $SCHEME"
+          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
 
-          echo "APP_FILE=$APP_FILE" >> $GITHUB_ENV
-
-      - name: Create Payload
+      - name: Build tvOS App
         run: |
-          rm -rf Payload
+          BUILD_FILE="${{ steps.locate.outputs.build_file }}"
+          BUILD_TYPE="${{ steps.locate.outputs.build_type }}"
+          SCHEME="${{ steps.scheme.outputs.scheme }}"
+
+          if [ "$BUILD_TYPE" = "workspace" ]; then
+            xcodebuild \
+              -workspace "$BUILD_FILE" \
+              -scheme "$SCHEME" \
+              -configuration Release \
+              -sdk appletvos \
+              -destination 'generic/platform=tvOS' \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              build
+          else
+            xcodebuild \
+              -project "$BUILD_FILE" \
+              -scheme "$SCHEME" \
+              -configuration Release \
+              -sdk appletvos \
+              -destination 'generic/platform=tvOS' \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              build
+          fi
+
+      - name: Locate Built App
+        id: builtapp
+        run: |
+          APP_PATH="$(find ~/Library/Developer/Xcode/DerivedData -path "*/Build/Products/Release-appletvos/*.app" -type d | head -n 1)"
+
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Built .app not found."
+            exit 1
+          fi
+
+          echo "Built app: $APP_PATH"
+          echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Package Unsigned IPA
+        run: |
           mkdir -p Payload
-
-          cp -R "$APP_FILE" Payload/
-
-          echo "Payload contents:"
-          find Payload | head -n 100
-
-      - name: Create unsigned IPA
-        run: |
+          cp -R "${{ steps.builtapp.outputs.app_path }}" Payload/
           zip -qry DebridChannelsTVOS_unsigned.ipa Payload
+
+          echo "Created IPA:"
+          ls -lh DebridChannelsTVOS_unsigned.ipa
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DebridChannelsTVOS-Unsigned-IPA
+          name: DebridChannelsTVOS_unsigned_ipa
           path: DebridChannelsTVOS_unsigned.ipa
-          
+          if-no-files-found: error
