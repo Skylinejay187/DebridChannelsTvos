@@ -1,0 +1,139 @@
+name: Signal F29 Build 1135 tvOS compile validation
+on:
+  workflow_dispatch:
+  push:
+    # Do not run experimental F28 builds for unrelated main-branch changes.
+    branches:
+      - 'signal/f28-*'
+    paths:
+      - 'Sources/**'
+      - 'Vendor/**'
+      - 'Scripts/**'
+      - 'project.yml'
+      - 'Resources/**'
+      - 'TopShelfExtension/**'
+      - '.github/workflows/signal-f28-tvos-compile.yml'
+# Experimental builds must never require repository write privileges.
+permissions:
+  contents: read
+
+# Cancel superseded builds on the same F28 branch, but preserve manual runs
+# independently from branch push runs.
+concurrency:
+  group: signal-f28-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  tvos-compile:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode and tools
+        run: |
+          xcodebuild -version
+          xcrun --sdk appletvos --show-sdk-version
+          python3 - <<'PY_SDK'
+          import subprocess
+          version = subprocess.check_output(['xcrun','--sdk','appletvos','--show-sdk-version'], text=True).strip()
+          major = int(version.split('.')[0])
+          if major < 26:
+              raise SystemExit(f'F29 requires tvOS 26+ SDK for upstream AetherEngine 7.44.0; found {version}')
+          PY_SDK
+          if ! command -v xcodegen >/dev/null 2>&1; then brew install xcodegen; fi
+          xcodegen --version
+      - name: Preflight full app source and bridge parity
+        run: bash Scripts/check_f28_source_preflight.sh
+      - name: Verify F29 build identity
+        run: python3 Scripts/check_f29_build_identity.py
+      - name: Verify build-log redaction regression
+        run: python3 Scripts/check_f28_diagnostic_redaction.py
+      - name: Enforce remote seek-thumbnail decoder safety gate
+        run: python3 Scripts/check_f28_remote_thumbnail_gate.py
+      - name: Install and patch pinned AetherEngine 7.44.0
+        run: |
+          set -euo pipefail
+          bash Scripts/fetch_aether_f28_744.sh > f28-engine-install.log 2>&1
+          python3 Scripts/verify_f28_aether_integration.py > f28-engine-verify.log 2>&1
+      - name: Generate project and verify pinned AetherEngine
+        run: |
+          set -o pipefail
+          xcodegen generate --spec project.yml > f28-preflight.log 2>&1
+      - name: Confirm real pinned AetherEngine is installed
+        run: |
+          set -euo pipefail
+          test "$(cat Vendor/AetherEngine/.signal-f28-version)" = "7.44.0"
+          test -d Vendor/AetherEngine/Sources/AetherEngine
+          python3 Scripts/verify_f28_aether_integration.py
+          # A marker file alone is insufficient: verify the actual Git checkout tag.
+          test "$(git -C Vendor/AetherEngine describe --tags --exact-match)" = "7.44.0"
+          git -C Vendor/AetherEngine diff --check
+      - name: Parse downloaded AetherEngine Swift sources
+        run: |
+          set -euo pipefail
+          # The normal source preflight runs before the engine is fetched. Parse
+          # the actual patched 7.44.0 checkout as well, before full compilation.
+          python3 - <<'PY_AETHER_PARSE'
+          from pathlib import Path
+          import subprocess
+          sources = sorted((Path('Vendor/AetherEngine') / 'Sources').rglob('*.swift'))
+          if not sources:
+              raise SystemExit('No downloaded AetherEngine Swift sources to validate')
+          # Argument lists may exceed OS limits when the upstream tree grows.
+          for start in range(0, len(sources), 60):
+              subprocess.run(['xcrun', 'swiftc', '-frontend', '-parse',
+                              *map(str, sources[start:start + 60])], check=True)
+          print(f'Parsed {len(sources)} patched AetherEngine Swift files')
+          PY_AETHER_PARSE
+      - name: Compile tvOS app (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project DebridChannelsTVOS.xcodeproj \
+            -scheme 00_DebridChannelsTVOS -configuration Release \
+            -destination 'generic/platform=tvOS' \
+            CODE_SIGNING_ALLOWED=NO build > f28-build.log 2>&1
+      - name: Record successful compile evidence
+        if: success()
+        run: |
+          set -euo pipefail
+          {
+            echo "F29 build 1135 — macOS compile evidence"
+            xcodebuild -version
+            echo "AetherEngine tag: $(git -C Vendor/AetherEngine describe --tags --exact-match)"
+            echo "Commit: $GITHUB_SHA"
+            echo "Result: unsigned tvOS Release compilation succeeded"
+            echo "Physical Apple TV runtime testing: NOT PERFORMED by this workflow"
+          } | tee f28-compile-evidence.txt
+      # Never tee raw compiler output into public Actions logs: Swift diagnostics
+      # can include embedded stream URLs and account secrets from source lines.
+      - name: Redact credentials from uploaded diagnostics
+        if: always()
+        run: python3 Scripts/sanitize_f28_build_logs.py
+      - name: Summarize sanitized compilation failures
+        if: failure()
+        run: |
+          python3 - <<'PY_DIAGNOSTICS'
+          from pathlib import Path
+          import re
+          safe_dir = Path('f28-public-diagnostics')
+          for name in ('f28-engine-install.log', 'f28-engine-verify.log', 'f28-preflight.log', 'f28-build.log'):
+              path = safe_dir / name
+              if not path.exists():
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              matches = [line for line in lines if re.search(r'error:|fatal error:|\*\* BUILD FAILED \*\*|failed|Traceback', line, re.I)]
+              print(f'::group::{name}: {len(matches)} sanitized diagnostic lines')
+              for line in matches[:80]:
+                  print(line[:400])
+              print('::endgroup::')
+          PY_DIAGNOSTICS
+      - name: Preserve build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: signal-f28-build-diagnostics
+          path: |
+            f28-public-diagnostics/
+            f28-compile-evidence.txt
+          if-no-files-found: ignore
+          
