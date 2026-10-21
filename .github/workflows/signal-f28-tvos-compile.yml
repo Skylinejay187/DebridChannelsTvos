@@ -38,7 +38,9 @@ jobs:
           if not candidates:
               raise SystemExit('No source ZIP in repository root. Upload one full project ZIP.')
           history = subprocess.check_output(['git','log','--all','--format=','--name-only','--','*.zip'],text=True).splitlines()
-          order = {}\n          for i, name in enumerate(x.strip() for x in history if x.strip()):\n              order.setdefault(name, i)
+          order = {}
+          for i, name in enumerate(x.strip() for x in history if x.strip()):
+              order.setdefault(name, i)
           candidates.sort(key=lambda p: order.get(p.name,10**9))
           valid = []
           for p in candidates:
