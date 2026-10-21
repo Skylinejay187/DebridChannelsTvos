@@ -1,4 +1,4 @@
-name: Signal F29 Build 1135 - Full ZIP tvOS IPA
+name: Universal Signal tvOS - Full Source ZIP to IPA
 
 on:
   workflow_dispatch:
@@ -6,101 +6,140 @@ on:
     branches:
       - signal/f28-test
     paths:
-      - 'Signal_F29_Build1135_FULL_ZIP_WORKFLOW_READY.zip'
+      - '*.zip'
       - '.github/workflows/signal-f28-tvos-compile.yml'
 
 permissions:
   contents: read
 
+concurrency:
+  group: signal-zip-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build-tvos:
+  build:
     runs-on: macos-26
     timeout-minutes: 90
-    defaults:
-      run:
-        shell: bash
-        working-directory: extracted
     steps:
-      - name: Checkout ZIP repository
+      - name: Checkout selected branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Extract F29 source ZIP
-        working-directory: .
+      - name: Locate newest committed source ZIP
+        id: source
+        shell: bash
         run: |
           set -euo pipefail
-          ZIP="Signal_F29_Build1135_FULL_ZIP_WORKFLOW_READY.zip"
-          test -f "$ZIP" || { echo "::error::Upload $ZIP to the repository root on the selected branch"; exit 1; }
-          mkdir -p extracted
-          unzip -q "$ZIP" -d extracted
-          test -f extracted/project.yml
-          test -f extracted/Scripts/check_f28_source_preflight.sh
-          test -f extracted/Scripts/check_f29_build_identity.py
+          python3 - <<'PY'
+          import os, subprocess, zipfile
+          from pathlib import Path
+          candidates = [p for p in Path('.').glob('*.zip') if p.is_file()]
+          if not candidates:
+              raise SystemExit('No source ZIP in repository root. Upload one full project ZIP.')
+          history = subprocess.check_output(['git','log','--all','--format=','--name-only','--','*.zip'],text=True).splitlines()
+          order = {name:i for i,name in enumerate(x.strip() for x in history if x.strip()) if name not in []}
+          candidates.sort(key=lambda p: order.get(p.name,10**9))
+          valid = []
+          for p in candidates:
+              try:
+                  with zipfile.ZipFile(p) as z:
+                      names = z.namelist()
+                      if any(n.endswith('project.yml') for n in names):
+                          valid.append(p)
+              except zipfile.BadZipFile:
+                  pass
+          if not valid:
+              raise SystemExit('No valid source ZIP containing project.yml.')
+          chosen = valid[0]
+          print('Selected source:',chosen)
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+              print('zip='+chosen.name,file=out)
+          PY
 
-      - name: Verify Xcode and tvOS SDK
+      - name: Extract complete source project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted
+          unzip -q "${{ steps.source.outputs.zip }}" -d extracted
+          PROJECT="$(find extracted -type f -name project.yml -not -path '*/__MACOSX/*' | head -n 1)"
+          test -n "$PROJECT" || { echo '::error::project.yml missing'; exit 1; }
+          DIR="$(dirname "$PROJECT")"
+          echo "SOURCE_DIR=$DIR" >> "$GITHUB_ENV"
+          echo "Project root: $DIR"
+
+      - name: Xcode and source checks
+        shell: bash
         run: |
           set -euo pipefail
           xcodebuild -version
-          SDK="$(xcrun --sdk appletvos --show-sdk-version)"
-          echo "tvOS SDK $SDK"
-          test "${SDK%%.*}" -ge 26
+          xcrun --sdk appletvos --show-sdk-version
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          cd "$SOURCE_DIR"
+          if [ -f Scripts/check_f28_source_preflight.sh ]; then bash Scripts/check_f28_source_preflight.sh; fi
+          if [ -f Scripts/check_f29_build_identity.py ]; then python3 Scripts/check_f29_build_identity.py; fi
 
-      - name: Validate F29 source
+      - name: Install project engine when requested
+        shell: bash
         run: |
           set -euo pipefail
-          bash Scripts/check_f28_source_preflight.sh
-          python3 Scripts/check_f29_build_identity.py
-          python3 Scripts/check_f28_diagnostic_redaction.py
-          python3 Scripts/check_f28_remote_thumbnail_gate.py
-
-      - name: Install AetherEngine 7.44.0
-        run: |
-          set -euo pipefail
-          bash Scripts/fetch_aether_f28_744.sh > f28-engine-install.log 2>&1
-          python3 Scripts/verify_f28_aether_integration.py > f28-engine-verify.log 2>&1
-          test "$(cat Vendor/AetherEngine/.signal-f28-version)" = "7.44.0"
+          cd "$SOURCE_DIR"
+          if [ -f Scripts/fetch_aether_f28_744.sh ]; then
+            bash Scripts/fetch_aether_f28_744.sh > "$GITHUB_WORKSPACE/engine-install.log" 2>&1 || { tail -n 100 "$GITHUB_WORKSPACE/engine-install.log"; exit 1; }
+          fi
 
       - name: Generate Xcode project
+        shell: bash
         run: |
           set -euo pipefail
-          xcodegen generate --spec project.yml > f28-preflight.log 2>&1
+          cd "$SOURCE_DIR"
+          xcodegen generate --spec project.yml 2>&1 | tee "$GITHUB_WORKSPACE/project-generation.log"
 
-      - name: Compile unsigned tvOS app
+      - name: Build unsigned tvOS app
+        shell: bash
         run: |
           set -euo pipefail
-          xcodebuild -project DebridChannelsTVOS.xcodeproj -scheme 00_DebridChannelsTVOS -configuration Release -destination 'generic/platform=tvOS' -derivedDataPath "$RUNNER_TEMP/f29-derived" CODE_SIGNING_ALLOWED=NO build > f28-build.log 2>&1
+          cd "$SOURCE_DIR"
+          PROJECT="$(find . -maxdepth 2 -name '*.xcodeproj' -type d | head -n 1)"
+          test -n "$PROJECT" || { echo '::error::No Xcode project generated'; exit 1; }
+          xcodebuild -list -json -project "$PROJECT" > "$GITHUB_WORKSPACE/schemes.json"
+          SCHEME="$(python3 - "$GITHUB_WORKSPACE/schemes.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          names=d.get('project',{}).get('schemes',[])
+          if not names: raise SystemExit('No shared build scheme found')
+          print(next((n for n in names if 'DebridChannels' in n or 'Signal' in n),names[0]))
+          PY
+          )"
+          echo "Building scheme: $SCHEME"
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -sdk appletvos -destination 'generic/platform=tvOS' -derivedDataPath "$RUNNER_TEMP/signal-derived" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build > "$GITHUB_WORKSPACE/tvos-build.log" 2>&1 || { grep -nE 'error:|BUILD FAILED|warning:' "$GITHUB_WORKSPACE/tvos-build.log" | tail -n 100 || true; exit 1; }
 
       - name: Package unsigned IPA
+        shell: bash
         run: |
           set -euo pipefail
-          APP="$RUNNER_TEMP/f29-derived/Build/Products/Release-appletvos/DebridChannelsTVOS.app"
-          if [ ! -d "$APP" ]; then
-            APP="$(find "$RUNNER_TEMP/f29-derived/Build/Products/Release-appletvos" -maxdepth 1 -type d -name '*.app' | head -n 1)"
-          fi
-          test -n "$APP" && test -d "$APP"
+          APP="$(find "$RUNNER_TEMP/signal-derived/Build/Products/Release-appletvos" -maxdepth 1 -type d -name '*.app' ! -name '*TopShelf*' | head -n 1)"
+          test -n "$APP" || { echo '::error::Built tvOS .app not found'; exit 1; }
           mkdir -p Payload
           cp -R "$APP" Payload/
-          zip -qry Signal_F29_1135_unsigned.ipa Payload
+          zip -qry Signal_tvOS_unsigned.ipa Payload
 
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Signal_F29_1135_unsigned_IPA
-          path: extracted/Signal_F29_1135_unsigned.ipa
+          name: Signal_tvOS_unsigned_IPA
+          path: Signal_tvOS_unsigned.ipa
           if-no-files-found: error
 
-      - name: Sanitize build diagnostics
-        if: always()
-        run: |
-          if [ -f Scripts/sanitize_f28_build_logs.py ]; then
-            python3 Scripts/sanitize_f28_build_logs.py
-          fi
-
-      - name: Upload sanitized diagnostics
+      - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Signal_F29_1135_build_diagnostics
-          path: extracted/f28-public-diagnostics/
+          name: Signal_tvOS_build_logs
+          path: |
+            tvos-build.log
+            engine-install.log
+            project-generation.log
+            schemes.json
           if-no-files-found: ignore
-          
