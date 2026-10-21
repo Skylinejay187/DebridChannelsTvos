@@ -2,6 +2,12 @@ name: Signal F29 Build 1135 - Full ZIP tvOS IPA
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - signal/f28-test
+    paths:
+      - 'Signal_F29_Build1135_FULL_ZIP_WORKFLOW_READY.zip'
+      - '.github/workflows/signal-f28-tvos-compile.yml'
 
 permissions:
   contents: read
