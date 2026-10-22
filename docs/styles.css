@@ -226,3 +226,9 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 /* Single catalog video in the original MobLand feature frame */
 .catalog-stage .signal-catalog-video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#03060a;border-radius:inherit;max-width:100%}
 .catalog-stage .catalog-image-wrap{overflow:hidden}
+
+/* Prevent intrinsic MP4 dimensions from expanding the original catalog poster frame. */
+.catalog-showcase,.catalog-stage,.catalog-stage .catalog-image-wrap{box-sizing:border-box;min-width:0;max-width:100%}
+.catalog-stage{width:100%;overflow:hidden}
+.catalog-stage .catalog-image-wrap{width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:15px}
+.catalog-stage video.signal-catalog-video{display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;height:100%;max-height:100%;aspect-ratio:16/9;object-fit:contain;position:relative;inset:auto;margin:0;border:0;border-radius:15px;background:#03060a}
