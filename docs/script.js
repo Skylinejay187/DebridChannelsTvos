@@ -11,7 +11,7 @@ nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
 const modal = document.querySelector('#lightbox');
 const modalImg = document.querySelector('#lightbox-img');
 const imageButtons = [...document.querySelectorAll('.open-image')];
-const galleryItems = [...document.querySelectorAll('.gallery-card')];
+const galleryItems = [...document.querySelectorAll('.gallery-item')];
 const galleryCount = document.querySelector('.gallery-count');
 let viewerItems = imageButtons;
 let viewerIndex = 0;
@@ -21,7 +21,7 @@ const showImage = () => {
   modalImg.alt = button.querySelector('img').alt;
 };
 imageButtons.forEach(button => button.addEventListener('click', () => {
-  viewerItems = button.closest('#gallery') ? galleryItems.filter(item => !item.hidden) : imageButtons;
+  viewerItems = button.closest('#gallery') ? galleryItems.filter(item => !item.hidden).map(item => item.querySelector('.open-image')) : imageButtons;
   viewerIndex = viewerItems.indexOf(button);
   showImage();
   modal.showModal();

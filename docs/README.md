@@ -1,6 +1,6 @@
 # Signal Unity — GitHub Pages website v4
 
-Complete static website for deployment to a dedicated GitHub Pages repository. The website includes 10 distinct Signal tvOS views: three main showcases and seven complementary gallery screenshots, original Signal logo, a Unity feature narrative, Trakt/Resume, VOD caching and Live TV timeshift, MediaFlow Proxy, AetherEngine, customizable themes, cast wall, Quick Guide, distribution notes and future development roadmap.
+Complete static website for deployment to a dedicated GitHub Pages repository. The website includes 21 distinct Signal tvOS screenshots, with illustrated feature explanations and a six-image complementary gallery, original Signal logo, a Unity feature narrative, Trakt/Resume, VOD caching and Live TV timeshift, MediaFlow Proxy, AetherEngine, customizable themes, cast wall, Quick Guide, distribution notes and future development roadmap.
 
 ## Review locally
 Run `python3 -m http.server 8000` from this directory and open `http://localhost:8000` in a browser.
