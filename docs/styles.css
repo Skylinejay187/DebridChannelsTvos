@@ -222,11 +222,7 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 @media(max-width:700px){.catalog-showcase{padding:65px 0 60px;scroll-margin-top:90px}.catalog-heading{margin-bottom:28px;text-align:left}.catalog-heading h2{font-size:36px}.catalog-heading>p:not(.kicker){font-size:15px}.catalog-stage{padding:5px 5px 0;border-radius:14px}.catalog-stage .feature-shot,.catalog-stage .feature-shot img{border-radius:9px}.catalog-stage figcaption{padding:12px 7px;display:block;font-size:10px}.catalog-stage figcaption>span:last-child{display:block;margin-top:6px;font-size:7px}.catalog-focus-mark b,.catalog-profile-mark{width:20px;height:20px;font-size:8px}.catalog-focus-mark b{top:-10px;left:6px}.catalog-notes{grid-template-columns:1fr;gap:24px;margin:28px 0 32px}.catalog-notes article{padding-top:18px}.catalog-notes h3{font-size:19px;margin-top:11px}.catalog-notes p{font-size:14px}.catalog-continuity{grid-template-columns:1fr;gap:0;padding:25px 22px}.catalog-journey{display:none}.catalog-continuity h3{font-size:25px}.discovery-link{margin-top:20px}}
 @media(prefers-reduced-motion:reduce){.catalog-showcase [data-loop]{animation:none!important}.catalog-link{transition:none}}
 
-/* Additive video module: existing Signal layout and gallery unchanged */
-.signal-video-demo{margin:clamp(24px,4vw,64px) auto;max-width:1240px;padding:clamp(18px,3vw,32px);border:1px solid rgba(157,207,235,.19);border-radius:24px;background:linear-gradient(145deg,rgba(12,27,39,.9),rgba(7,10,17,.92))}
-.signal-video-intro{margin-bottom:22px}.signal-video-intro h3{font-size:clamp(1.4rem,3vw,2.4rem);margin:8px 0}.signal-video-intro p{max-width:760px;color:#b7c3d0}
-.signal-video-pair,.signal-video-loops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.signal-video-loops{margin-top:18px}
-.signal-video-demo figure{margin:0;min-width:0}.signal-video-demo video{width:100%;aspect-ratio:16/9;object-fit:contain;display:block;background:#03060a;border-radius:14px;border:1px solid rgba(177,217,241,.17)}
-.signal-video-demo figcaption{font-size:.8rem;letter-spacing:.04em;color:#a9bfcb;margin:10px 3px}
-@media(max-width:680px){.signal-video-pair,.signal-video-loops{grid-template-columns:1fr}.signal-video-demo{border-radius:18px}}
-@media(prefers-reduced-motion:reduce){.signal-video-loops video{display:none}}
+
+/* Single inline cinematic preview: uses the existing catalog-stage frame */
+.catalog-stage .signal-catalog-video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#03060a;border-radius:inherit;box-shadow:none;max-width:100%}
+.catalog-stage .catalog-image-wrap{overflow:hidden}
