@@ -59,3 +59,39 @@
 @media(max-width:1050px){.ecosystem-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.roadmap-items{grid-template-columns:1fr}}
 @media(max-width:700px){.deep-dive,.future-section{padding:65px 20px}.ecosystem-grid{grid-template-columns:1fr}.ecosystem-card{min-height:0;padding:28px}.gallery-editorial{grid-template-columns:1fr}.gallery-editorial-main{aspect-ratio:1.4}.gallery-editorial-small{aspect-ratio:2}.gallery-toolbar{flex-wrap:wrap}.future-content h2{font-size:42px}}
 @media(prefers-reduced-motion:reduce){.future-glow{animation:none}.ecosystem-card:hover,.gallery-grid .gallery-card:hover{transform:none}}
+
+
+/* Signal Unity editorial refresh */
+.founder-story,.signal-depth,.support-section{position:relative;overflow:hidden;scroll-margin-top:85px}
+.founder-story{padding:120px max(5vw,24px);background:radial-gradient(ellipse at 80% 15%,#173a504d,transparent 58%),#080c13}
+.story-halo{pointer-events:none;position:absolute;inset:-30% -10%;background:radial-gradient(circle at 76% 45%,#8cdcff14,transparent 36%);animation:storyBreathe 12s ease-in-out infinite alternate}
+.story-wrap{position:relative;max-width:1390px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:9%;align-items:center}
+.story-lead h2,.signal-depth h2,.support-inner h2{font:800 clamp(35px,4.5vw,69px)/1.1 Manrope,Arial,sans-serif;letter-spacing:-.06em;margin:20px 0 30px}
+.story-lead h2 em,.signal-depth h2 em{color:#9adfff;font-style:normal}
+.story-deck{font-size:clamp(17px,1.5vw,22px);line-height:1.75;color:#b8c9da}
+.story-rule{margin-top:45px;padding-top:24px;border-top:1px solid #ffffff2b;font-size:10px;letter-spacing:.16em;line-height:2;color:#8bb9d2}
+.story-letter{position:relative;border:1px solid #a7dfff3a;border-radius:24px;padding:clamp(27px,4vw,60px);background:linear-gradient(145deg,#152434dc,#0a101acb);box-shadow:0 28px 90px #0008}
+.story-letter p{position:relative;font-size:15px;line-height:1.9;color:#d1dae6}
+.story-letter strong{display:block;margin-top:24px;color:#9cdbf6;font-size:13px}
+.story-quote{position:absolute;top:0;right:35px;color:#8bdfff26;font:900 150px Georgia,serif}
+.signal-depth{padding:115px max(5vw,24px);max-width:1500px;margin:auto}
+.depth-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.depth-card{min-height:275px;padding:28px;border:1px solid #ffffff24;border-radius:17px;background:linear-gradient(145deg,#111e2b,#0b1019);transition:transform .3s,border-color .3s,box-shadow .3s}
+.depth-card:hover{transform:translateY(-7px);border-color:#a1dfff80;box-shadow:0 20px 55px #0007}
+.depth-card>span,.support-grid small{font-size:10px;color:#93d9f9;letter-spacing:.16em;font-weight:800}
+.depth-card h3{font-size:20px;line-height:1.3;margin:25px 0 15px}
+.depth-card p,.support-inner>p,.support-grid p{font-size:14px;line-height:1.8;color:#aab9ca}
+.support-section{padding:110px max(5vw,24px);background:radial-gradient(ellipse at 15% 20%,#274e6244,transparent 55%),#0a1018}
+.support-inner{max-width:1380px;margin:auto}
+.support-inner>p{max-width:900px;font-size:17px}
+.support-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:42px}
+.support-grid>div{border:1px solid #ffffff29;border-radius:18px;padding:32px;background:#ffffff07}
+.support-grid h3{font-size:22px;margin:20px 0 10px}
+.hero-copy h1 span{background:linear-gradient(110deg,#80d8ff,#b6b5ff,#a2e8ff,#80d8ff);background-size:250% auto;background-clip:text;-webkit-background-clip:text;color:transparent;animation:signalIridescence 9s linear infinite}
+.hero-art{animation:signalFloat 8s ease-in-out infinite alternate}
+@keyframes signalIridescence{to{background-position:250% center}}
+@keyframes signalFloat{to{translate:0 -12px}}
+@keyframes storyBreathe{to{opacity:.35;transform:translateX(-4%)}}
+@media(max-width:1100px){.depth-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:750px){.story-wrap{grid-template-columns:1fr;gap:40px}.founder-story,.signal-depth,.support-section{padding:75px 20px}.support-grid{grid-template-columns:1fr}.depth-grid{grid-template-columns:1fr}.depth-card{min-height:unset}.hero-art{animation:none}}
+@media(prefers-reduced-motion:reduce){.story-halo,.hero-copy h1 span,.hero-art{animation:none!important}}
