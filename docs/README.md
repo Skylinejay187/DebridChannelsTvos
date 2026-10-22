@@ -12,3 +12,5 @@ Upload `index.html`, `styles.css`, `script.js`, `assets/`, `privacy.html`, `term
 The legal pages are preliminary, third-party movie/show screenshots may require promotional rights review, and distribution language should be confirmed before public launch. Claims about future Apple TV hardware are intentionally qualified.
 
 The cinematic opening uses the real app screenshot and supplied launcher artwork. Dedicated VOD overlay and episode-alert sections explain the new images. CSS light trails, scroll reveals, screen highlights, a pointer-responsive stage and navigation progress provide motion. Decorative loops pause outside visible sections and when the page is hidden; reduced-motion preferences are respected.
+
+The catalog-previews showcase uses the existing MobLand screenshot once, enlarges the in-card preview and media-profile view, and preserves the original watch-journey explanation. An actual app recording is still needed for the walkthrough video and feature clips; no simulated playback is presented as recorded footage.

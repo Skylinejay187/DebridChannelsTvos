@@ -72,7 +72,7 @@ if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: re
 
 // Cinematic motion is tied to visibility; no render loop runs in the background.
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const motionScenes = [...document.querySelectorAll('.hero-cinema,.feature,.visual-details,.founder-story,.future-section,.unity-journey,.unity-banner')];
+const motionScenes = [...document.querySelectorAll('.hero-cinema,.catalog-showcase,.feature,.visual-details,.founder-story,.future-section,.unity-journey,.unity-banner')];
 document.querySelectorAll('.story-halo,.future-glow,.journey-beam,.cinema-scroll svg,.launcher-identity').forEach(element => element.setAttribute('data-loop', ''));
 if ('IntersectionObserver' in window) {
   document.documentElement.classList.add('has-scene-motion');
