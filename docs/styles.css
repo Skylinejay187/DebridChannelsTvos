@@ -289,3 +289,38 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 @media(prefers-reduced-motion:reduce){.capture-video,.tour-start{transition:none}}
 
 .tour-chapters[hidden]{display:none!important}
+
+/* Playback stories: original screenshots, with room for the controls to speak. */
+.playback-detail h2{max-width:12ch}
+.playback-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:23px}
+.playback-links a{padding:9px 13px;border:1px solid #bcdfff2b;border-radius:100px;background:#94cfff08;color:#9fc8e0;font-size:11px;line-height:1.4;transition:background .2s,border-color .2s}
+.playback-links a:hover{background:#a1dbff15;border-color:#bde6ff66}
+.playback-moments{margin-bottom:70px}
+.detail-copy .detail-eyebrow{font-size:9px;letter-spacing:.2em;font-weight:700;color:#e3b580;margin:0 0 12px}
+.playback-moments .detail-copy h3{font-family:Manrope,Arial,sans-serif;letter-spacing:-.035em;font-size:clamp(21px,2vw,30px);line-height:1.3}
+/* The viewer always loads the untouched source, with an optional native-size view. */
+#lightbox{box-sizing:border-box;width:min(1600px,96vw);max-width:96vw;max-height:94svh;padding:14px;margin:auto;border:1px solid #b8dcff33;border-radius:16px;overflow:hidden;background:#080e16;box-shadow:0 30px 150px #000a}
+#lightbox::backdrop{background:#02050be8;backdrop-filter:blur(8px)}
+.lightbox-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.lightbox-heading{min-width:0;flex:1}
+.lightbox-heading>span{font-size:8px;font-weight:700;letter-spacing:.2em;color:#8ab9d3}
+.lightbox-heading p{color:#c7d9e8;margin:6px 0 0;font-size:11px;line-height:1.5;max-width:75ch}
+.lightbox-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.lightbox-actions button,.lightbox-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 13px;border:1px solid #b5d9f336;border-radius:100px;background:#a5d9ff09;color:#c5e0f1;font-size:10px;line-height:1.3;white-space:nowrap}
+.lightbox-actions button:hover,.lightbox-actions a:hover{background:#a5d9ff1c;border-color:#b5d9f366}
+#image-zoom[aria-pressed=true]{background:#b9e4ff;color:#0b1a27;border-color:#b9e4ff}
+#image-resolution{color:#7497b0;font-size:9px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.image-navigation{display:flex;align-items:center;gap:7px}
+.image-navigation button{width:36px;padding:6px}
+#image-counter{font-size:9px;min-width:35px;text-align:center;color:#91b2c9;font-variant-numeric:tabular-nums}
+#lightbox #close{position:static;flex-shrink:0;width:36px;min-height:36px;padding:0;font-size:23px;line-height:1;color:#d9ebf7}
+.lightbox-viewport{box-sizing:border-box;width:100%;height:min(76svh,70vw);display:grid;place-items:center;overflow:auto;border-radius:9px;background:#000;overscroll-behavior:contain;scrollbar-color:#4e7188 #091018;touch-action:pan-x pan-y pinch-zoom}
+#lightbox-img{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;filter:none;transform:none;image-rendering:auto;border-radius:0}
+#lightbox.is-zoomed .lightbox-viewport{display:block}
+#lightbox.is-zoomed #lightbox-img{width:var(--source-width,1536px);height:auto;max-width:none;max-height:none;margin:0}
+.lightbox-help{font-size:9px;color:#7696ac;line-height:1.6;margin:10px 3px 0}
+.lightbox-actions button:focus-visible,.lightbox-actions a:focus-visible,.lightbox-viewport:focus-visible,.playback-links a:focus-visible{outline:2px solid #bce6ff;outline-offset:3px}
+@media(max-width:760px){.lightbox-toolbar{align-items:flex-start;flex-direction:column;gap:10px}.lightbox-heading p{font-size:10px}.lightbox-actions{width:100%;justify-content:flex-start;gap:6px}.lightbox-actions button,.lightbox-actions a{font-size:9px;padding:8px 10px}.lightbox-actions #close{margin-left:auto}#image-resolution{font-size:8px}.lightbox-help{font-size:8px}#lightbox{padding:10px;border-radius:13px}.lightbox-viewport{height:min(65svh,78vw)}.playback-links a{font-size:10px}.playback-moments{margin-bottom:45px}}
+#lightbox.is-zoomed .lightbox-viewport{place-items:start;text-align:left}
+#lightbox.is-zoomed #lightbox-img{justify-self:start;align-self:start}
+@media(max-width:520px){#image-resolution{flex-basis:100%}.image-navigation{margin-right:auto}.lightbox-actions{gap:5px}.lightbox-actions button,.lightbox-actions a{padding-inline:9px}.image-navigation button{width:34px;padding-inline:5px}}

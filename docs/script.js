@@ -15,11 +15,44 @@ const galleryItems = [...document.querySelectorAll('.gallery-item')];
 const galleryCount = document.querySelector('.gallery-count');
 let viewerItems = imageButtons;
 let viewerIndex = 0;
+const imageZoom = document.querySelector('#image-zoom');
+const imageViewport = document.querySelector('.lightbox-viewport');
+const resetImageZoom = () => {
+  modal.classList.remove('is-zoomed');
+  imageZoom.setAttribute('aria-pressed', 'false');
+  imageZoom.textContent = 'Zoom in';
+  imageViewport.scrollTo(0, 0);
+};
+const updateImageResolution = () => {
+  if (!modalImg.naturalWidth) return;
+  document.querySelector('#image-resolution').textContent = `${modalImg.naturalWidth} × ${modalImg.naturalHeight}`;
+  modalImg.style.setProperty('--source-width', `${modalImg.naturalWidth}px`);
+};
+modalImg.addEventListener('load', updateImageResolution);
+imageZoom.addEventListener('click', () => {
+  const zoomed = modal.classList.toggle('is-zoomed');
+  imageZoom.setAttribute('aria-pressed', String(zoomed));
+  imageZoom.textContent = zoomed ? 'Fit to screen' : 'Zoom in';
+  imageViewport.scrollTo(0, 0);
+});
 const showImage = () => {
   const button = viewerItems[viewerIndex];
   modalImg.src = button.dataset.image;
   modalImg.alt = button.querySelector('img').alt;
+  document.querySelector('#lightbox-title').textContent = modalImg.alt;
+  document.querySelector('#image-original').href = button.dataset.image;
+  document.querySelector('#image-counter').textContent = `${viewerIndex + 1} / ${viewerItems.length}`;
+  document.querySelector('#image-resolution').textContent = '';
+  resetImageZoom();
+  if (modalImg.complete) updateImageResolution();
 };
+const advanceImage = step => {
+  if (!viewerItems.length) return;
+  viewerIndex = (viewerIndex + step + viewerItems.length) % viewerItems.length;
+  showImage();
+};
+document.querySelector('#image-prev').addEventListener('click', () => advanceImage(-1));
+document.querySelector('#image-next').addEventListener('click', () => advanceImage(1));
 imageButtons.forEach(button => button.addEventListener('click', () => {
   viewerItems = button.closest('#gallery') ? galleryItems.filter(item => !item.hidden).map(item => item.querySelector('.open-image')) : imageButtons;
   viewerIndex = viewerItems.indexOf(button);
@@ -27,15 +60,18 @@ imageButtons.forEach(button => button.addEventListener('click', () => {
   document.documentElement.classList.add('image-viewing');
   modal.showModal();
 }));
-modal.addEventListener('close', () => document.documentElement.classList.remove('image-viewing'));
+modal.addEventListener('close', () => {
+  document.documentElement.classList.remove('image-viewing');
+  resetImageZoom();
+});
 document.querySelector('#close').addEventListener('click', () => modal.close());
 modal.addEventListener('click', event => {
   if (event.target === modal) modal.close();
 });
 modal.addEventListener('keydown', event => {
   if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || !viewerItems.length) return;
-  viewerIndex = (viewerIndex + (event.key === 'ArrowRight' ? 1 : -1) + viewerItems.length) % viewerItems.length;
-  showImage();
+  if (modal.classList.contains('is-zoomed') && event.target === imageViewport) return;
+  advanceImage(event.key === 'ArrowRight' ? 1 : -1);
   event.preventDefault();
 });
 
@@ -162,3 +198,4 @@ if ('IntersectionObserver' in window) {
     if (target) navObserver.observe(target);
   });
 }
+
