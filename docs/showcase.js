@@ -29,7 +29,8 @@
   }));
   let entries = [], chapters = [], chapterButtons = [], duration = 0;
   let active = 0, current = 0, mode = 'still', initialized = false;
-  let wantsPlay = false, visible = false, changing = false, generation = 0, scrubbing = false;
+  let wantsPlay = true, visible = false, changing = false, generation = 0, scrubbing = false;
+  let autoStarted = false;
   let failed = false, lastChapter = -1;
   const format = seconds => `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds) % 60)).padStart(2, '0')}`;
   const viewerOpen = () => Boolean(lightbox && lightbox.open);
@@ -271,7 +272,10 @@
           if (item) item.visible = change.isIntersecting;
         }
       });
-      syncPlayback();
+      if (visible && mode === 'motion' && !autoStarted && entries.length && !reduced.matches && !saveData) {
+        autoStarted = true;
+        jump(0, 0, true);
+      } else syncPlayback();
     }, {threshold: .1});
     observer.observe(slot);
     loops.forEach(item => observer.observe(item.element));
@@ -310,6 +314,7 @@
     narration(0);
     root.classList.add('showcase-ready');
     setMainMode(reduced.matches || saveData ? 'still' : 'motion');
+    if (visible && mode === 'motion' && !autoStarted) { autoStarted = true; jump(0, 0, true); }
     loops.forEach(item => setLoopMode(item, reduced.matches || saveData || !('IntersectionObserver' in window) ? 'still' : 'motion'));
   }).catch(fallback);
 })();
