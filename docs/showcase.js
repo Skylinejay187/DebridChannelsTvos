@@ -287,7 +287,7 @@
       loops.forEach(item => setLoopMode(item, 'still'));
     }
   });
-  fetch('assets/tour/tour.json').then(response => {
+  fetch('assets/tour/tour.json?v=20261023-two-scenes', {cache: 'no-store'}).then(response => {
     if (!response.ok) throw new Error('Showcase unavailable');
     return response.json();
   }).then(manifest => {
