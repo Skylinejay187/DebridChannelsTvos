@@ -324,3 +324,4 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 #lightbox.is-zoomed .lightbox-viewport{place-items:start;text-align:left}
 #lightbox.is-zoomed #lightbox-img{justify-self:start;align-self:start}
 @media(max-width:520px){#image-resolution{flex-basis:100%}.image-navigation{margin-right:auto}.lightbox-actions{gap:5px}.lightbox-actions button,.lightbox-actions a{padding-inline:9px}.image-navigation button{width:34px;padding-inline:5px}}
+.playback-detail .expand,.playback-moments .expand{top:12px;bottom:auto;right:12px}
