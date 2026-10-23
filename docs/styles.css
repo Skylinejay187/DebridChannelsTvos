@@ -325,3 +325,27 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 #lightbox.is-zoomed #lightbox-img{justify-self:start;align-self:start}
 @media(max-width:520px){#image-resolution{flex-basis:100%}.image-navigation{margin-right:auto}.lightbox-actions{gap:5px}.lightbox-actions button,.lightbox-actions a{padding-inline:9px}.image-navigation button{width:34px;padding-inline:5px}}
 .playback-detail .expand,.playback-moments .expand{top:12px;bottom:auto;right:12px}
+
+/* Future social experiences: clearly described concepts, never a simulated live service. */
+.roadmap-link{display:inline-flex;align-items:center;gap:13px;margin-top:10px;color:#aadcf6;font-size:12px;border-bottom:1px solid #a4dfff38;padding-bottom:5px}
+.future-content .roadmap-disclosure{font-size:12px;line-height:1.9;color:#9eb5c8;border-left:2px solid #c9a57766;padding:3px 0 3px 18px;max-width:890px;margin-top:30px}
+.roadmap-disclosure strong{color:#d5e6f3;font-weight:600}
+.social-roadmap{position:relative;border:1px solid #b9dcff29;border-radius:24px;padding:32px;background:linear-gradient(125deg,#11233580,#14111b70);margin:48px 0 32px;scroll-margin-top:110px}
+.social-roadmap-heading{display:flex;gap:32px;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+.social-status{display:inline-flex;font-size:9px;letter-spacing:.14em;color:#e4bd95;line-height:1.7;border:1px solid #e3b98535;background:#c2a07e09;border-radius:100px;padding:7px 11px}
+.social-roadmap-heading h3{font:700 clamp(28px,3.5vw,46px)/1.15 Manrope,Arial,sans-serif;letter-spacing:-.045em;margin:18px 0 0;color:#edf4fc}
+.social-roadmap-heading>p{font-size:12px;line-height:1.9;color:#9eb3c6;max-width:430px;margin:0}
+.social-roadmap-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.social-roadmap-grid article{display:flex;flex-direction:column;min-width:0;border:1px solid #adcfee24;border-radius:16px;background:linear-gradient(150deg,#17293a55,#080f1bd9);padding:25px 22px}
+.social-card-label{font-size:8px;font-weight:700;letter-spacing:.14em;color:#85b9d7;line-height:1.7}
+.social-roadmap-grid h4{font:700 22px/1.3 Manrope,Arial,sans-serif;letter-spacing:-.025em;color:#e9f2fa;margin:21px 0 14px}
+.social-roadmap-grid article>p{font-size:12px;line-height:1.9;color:#a8bbcc;margin:0 0 27px}
+.social-card-footer{display:flex;flex-direction:column;align-items:flex-start;gap:9px;border-top:1px solid #c1dcf01b;padding-top:16px;margin-top:auto}
+.social-card-footer>span{font-size:8px;letter-spacing:.14em;color:#e0b894}
+.social-card-footer small{font-size:10px;color:#7593ab;line-height:1.5}
+.social-roadmap-note{display:grid;grid-template-columns:205px 1fr;gap:24px;margin:27px 2px 0;padding-top:24px;border-top:1px solid #afcde426}
+.social-roadmap-note strong{font-size:12px;color:#c6d9e9;font-weight:600;line-height:1.9}
+.social-roadmap-note p{font-size:11px;line-height:1.9;color:#8da7be;margin:0;max-width:850px}
+.roadmap-link:focus-visible{outline:2px solid #bce6ff;outline-offset:5px}
+@media(max-width:900px){.social-roadmap{padding:24px}.social-roadmap-heading{align-items:flex-start;flex-direction:column;gap:18px}.social-roadmap-heading>p{max-width:650px}.social-roadmap-grid{grid-template-columns:1fr}.social-roadmap-grid article{padding:24px}.social-roadmap-grid h4{margin-top:13px}.social-roadmap-grid article>p{margin-bottom:21px}.social-roadmap-note{grid-template-columns:1fr;gap:9px}}
+@media(max-width:520px){.social-roadmap{padding:19px 15px;border-radius:18px;margin-top:32px}.social-status{font-size:7px;padding:6px 9px;letter-spacing:.1em}.social-roadmap-heading h3{font-size:31px}.social-roadmap-heading>p{font-size:11px}.social-roadmap-grid article{padding:22px 18px}.social-roadmap-grid h4{font-size:21px}.social-roadmap-grid article>p{font-size:12px}.future-content .roadmap-disclosure{padding-left:14px}.social-card-label{font-size:8px}}
