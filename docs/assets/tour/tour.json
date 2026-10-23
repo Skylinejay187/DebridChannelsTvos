@@ -1,89 +1,6 @@
 {
   "chapters": [
     {
-      "id": "channels",
-      "title": "Live TV, at a glance",
-      "description": "Browse your channels without leaving the living TV grid.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-channels-00.mp4",
-          "duration": 5.998256,
-          "bytes": 1167009
-        },
-        {
-          "src": "assets/tour/scene-channels-01.mp4",
-          "duration": 4.997233,
-          "bytes": 1013479
-        },
-        {
-          "src": "assets/tour/scene-channels-02.mp4",
-          "duration": 0.5759,
-          "bytes": 126397
-        }
-      ]
-    },
-    {
-      "id": "discovery",
-      "title": "Find your next story",
-      "description": "Resume, recommendations and cinematic Cover Flow stay together.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-discovery-00.mp4",
-          "duration": 5.930778,
-          "bytes": 1723890
-        },
-        {
-          "src": "assets/tour/scene-discovery-01.mp4",
-          "duration": 4.948056,
-          "bytes": 1759336
-        },
-        {
-          "src": "assets/tour/scene-discovery-02.mp4",
-          "duration": 1.924911,
-          "bytes": 296430
-        }
-      ]
-    },
-    {
-      "id": "catalogs",
-      "title": "Previews right in the catalog",
-      "description": "A focused card can play a preview while the title information stays beside it.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-catalogs-00.mp4",
-          "duration": 5.9982,
-          "bytes": 1068850
-        },
-        {
-          "src": "assets/tour/scene-catalogs-01.mp4",
-          "duration": 4.2236,
-          "bytes": 691465
-        }
-      ]
-    },
-    {
-      "id": "profiles",
-      "title": "Open a profile. Stay in context.",
-      "description": "Explore a title, its cast and episodes, then open a trailer in place.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-profiles-00.mp4",
-          "duration": 5.006256,
-          "bytes": 1368970
-        },
-        {
-          "src": "assets/tour/scene-profiles-01.mp4",
-          "duration": 5.981167,
-          "bytes": 1038488
-        },
-        {
-          "src": "assets/tour/scene-profiles-02.mp4",
-          "duration": 2.274722,
-          "bytes": 635278
-        }
-      ]
-    },
-    {
       "id": "trailers",
       "title": "A trailer. Your place preserved.",
       "description": "Watch a floating trailer and return to the same world of discovery.",
@@ -102,50 +19,6 @@
           "src": "assets/tour/scene-trailers-02.mp4",
           "duration": 4.398389,
           "bytes": 1322805
-        }
-      ]
-    },
-    {
-      "id": "vod",
-      "title": "More context. Still watching.",
-      "description": "Now-playing details, controls and Spotlight share the picture.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-vod-00.mp4",
-          "duration": 5.997133,
-          "bytes": 1443366
-        },
-        {
-          "src": "assets/tour/scene-vod-01.mp4",
-          "duration": 4.998456,
-          "bytes": 1631527
-        },
-        {
-          "src": "assets/tour/scene-vod-02.mp4",
-          "duration": 4.998156,
-          "bytes": 2038088
-        },
-        {
-          "src": "assets/tour/scene-vod-03.mp4",
-          "duration": 3.748522,
-          "bytes": 1573349
-        }
-      ]
-    },
-    {
-      "id": "alerts",
-      "title": "An episode finds you",
-      "description": "A new-episode alert arrives while your channels remain in view.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-alerts-00.mp4",
-          "duration": 5.980778,
-          "bytes": 1170502
-        },
-        {
-          "src": "assets/tour/scene-alerts-01.mp4",
-          "duration": 2.632033,
-          "bytes": 531462
         }
       ]
     },
@@ -178,28 +51,6 @@
           "src": "assets/tour/scene-quick-guide-04.mp4",
           "duration": 2.890922,
           "bytes": 1318940
-        }
-      ]
-    },
-    {
-      "id": "themes",
-      "title": "Give the story the whole screen",
-      "description": "Cinematic artwork changes the atmosphere while navigation stays familiar.",
-      "clips": [
-        {
-          "src": "assets/tour/scene-themes-00.mp4",
-          "duration": 5.997689,
-          "bytes": 1733474
-        },
-        {
-          "src": "assets/tour/scene-themes-01.mp4",
-          "duration": 4.998167,
-          "bytes": 1289052
-        },
-        {
-          "src": "assets/tour/scene-themes-02.mp4",
-          "duration": 2.632989,
-          "bytes": 1154069
         }
       ]
     }
