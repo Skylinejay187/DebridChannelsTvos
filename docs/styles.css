@@ -352,3 +352,22 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 
 /* Higher-resolution assets retain the original screenshot display scale. */
 #lightbox:not(.is-zoomed) #lightbox-img{max-width:min(100%,var(--source-width,1536px))}
+
+/* Compact inline screenshots on phones; resolution and full-image framing stay independent. */
+@media (max-width:700px){
+  .feature>.feature-shot,
+  .feature>.feature-media,
+  .visual-detail>.detail-shot,
+  .visual-detail>.feature-media,
+  .gallery-item>.gallery-card,
+  .gallery-item>.feature-media{
+    width:82%;
+    max-width:420px;
+    justify-self:center;
+    margin-inline:auto;
+  }
+  .visual-detail>.detail-shot,
+  .visual-detail>.feature-media,
+  .gallery-item>.gallery-card,
+  .gallery-item>.feature-media{margin-top:12px}
+}
