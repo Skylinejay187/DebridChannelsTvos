@@ -349,3 +349,6 @@ body{overflow-x:clip}section[id],article[id]{scroll-margin-top:104px}
 .roadmap-link:focus-visible{outline:2px solid #bce6ff;outline-offset:5px}
 @media(max-width:900px){.social-roadmap{padding:24px}.social-roadmap-heading{align-items:flex-start;flex-direction:column;gap:18px}.social-roadmap-heading>p{max-width:650px}.social-roadmap-grid{grid-template-columns:1fr}.social-roadmap-grid article{padding:24px}.social-roadmap-grid h4{margin-top:13px}.social-roadmap-grid article>p{margin-bottom:21px}.social-roadmap-note{grid-template-columns:1fr;gap:9px}}
 @media(max-width:520px){.social-roadmap{padding:19px 15px;border-radius:18px;margin-top:32px}.social-status{font-size:7px;padding:6px 9px;letter-spacing:.1em}.social-roadmap-heading h3{font-size:31px}.social-roadmap-heading>p{font-size:11px}.social-roadmap-grid article{padding:22px 18px}.social-roadmap-grid h4{font-size:21px}.social-roadmap-grid article>p{font-size:12px}.future-content .roadmap-disclosure{padding-left:14px}.social-card-label{font-size:8px}}
+
+/* Higher-resolution assets retain the original screenshot display scale. */
+#lightbox:not(.is-zoomed) #lightbox-img{max-width:min(100%,var(--source-width,1536px))}

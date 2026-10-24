@@ -26,7 +26,9 @@ const resetImageZoom = () => {
 const updateImageResolution = () => {
   if (!modalImg.naturalWidth) return;
   document.querySelector('#image-resolution').textContent = `${modalImg.naturalWidth} × ${modalImg.naturalHeight}`;
-  modalImg.style.setProperty('--source-width', `${modalImg.naturalWidth}px`);
+  // Keep the original display scale independently of the higher-resolution file.
+  const displayWidth = Number(modalImg.dataset.displayWidth) || modalImg.naturalWidth;
+  modalImg.style.setProperty('--source-width', `${displayWidth}px`);
 };
 modalImg.addEventListener('load', updateImageResolution);
 imageZoom.addEventListener('click', () => {
@@ -37,6 +39,7 @@ imageZoom.addEventListener('click', () => {
 });
 const showImage = () => {
   const button = viewerItems[viewerIndex];
+  modalImg.dataset.displayWidth = button.dataset.displayWidth || '';
   modalImg.src = button.dataset.image;
   modalImg.alt = button.querySelector('img').alt;
   document.querySelector('#lightbox-title').textContent = modalImg.alt;
