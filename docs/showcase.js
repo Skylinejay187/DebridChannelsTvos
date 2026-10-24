@@ -159,8 +159,9 @@
       updateState();
       // Let the last decoded frame fade away before reusing the spare element.
       const spare = 1 - active;
-      if (index + 1 < entries.length) setTimeout(() => {
-        if (generation === token && active !== spare) load(index + 1, videos[spare]).catch(() => {});
+      const next = (index + 1) % entries.length;
+      if (entries.length > 1) setTimeout(() => {
+        if (generation === token && active !== spare) load(next, videos[spare]).catch(() => {});
       }, reduced.matches ? 0 : oldChapter === entries[index].chapterIndex ? 150 : 550);
       syncPlayback();
     } catch (_) { if (token === generation) fallback(); }
@@ -222,7 +223,7 @@
     video.addEventListener('playing', () => { if (index === active) loading.hidden = true; });
     video.addEventListener('ended', () => {
       if (index !== active || changing) return;
-      if (current + 1 < entries.length && wantsPlay) jump(current + 1, 0, true);
+      if (wantsPlay) jump((current + 1) % entries.length, 0, true);
       else {
         wantsPlay = false;
         elapsed.textContent = format(duration);
@@ -287,7 +288,7 @@
       loops.forEach(item => setLoopMode(item, 'still'));
     }
   });
-  fetch('assets/tour/tour.json?v=20261023-two-scenes', {cache: 'no-store'}).then(response => {
+  fetch('assets/tour/tour.json?v=20261024-loop-hd', {cache: 'no-store'}).then(response => {
     if (!response.ok) throw new Error('Showcase unavailable');
     return response.json();
   }).then(manifest => {

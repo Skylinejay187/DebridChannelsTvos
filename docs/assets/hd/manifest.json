@@ -1,0 +1,440 @@
+{
+  "scale": 2,
+  "method": "Lanczos resampling",
+  "encoding": "lossless WebP",
+  "note": "Upscaled from original captures; no generated or reconstructed interface details.",
+  "images": [
+    {
+      "source": "assets/41494.jpg",
+      "path": "assets/hd/41494.webp",
+      "original": [
+        1536,
+        921
+      ],
+      "size": [
+        3072,
+        1842
+      ]
+    },
+    {
+      "source": "assets/41719.jpg",
+      "path": "assets/hd/41719.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41727.jpg",
+      "path": "assets/hd/41727.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41728.jpg",
+      "path": "assets/hd/41728.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41732.jpg",
+      "path": "assets/hd/41732.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41734.jpg",
+      "path": "assets/hd/41734.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41790.jpg",
+      "path": "assets/hd/41790.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41791.jpg",
+      "path": "assets/hd/41791.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41792.jpg",
+      "path": "assets/hd/41792.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41793.jpg",
+      "path": "assets/hd/41793.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41794.jpg",
+      "path": "assets/hd/41794.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41795.jpg",
+      "path": "assets/hd/41795.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41796.jpg",
+      "path": "assets/hd/41796.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41797.jpg",
+      "path": "assets/hd/41797.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41798.jpg",
+      "path": "assets/hd/41798.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41799.jpg",
+      "path": "assets/hd/41799.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41800.jpg",
+      "path": "assets/hd/41800.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41801.jpg",
+      "path": "assets/hd/41801.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41802.jpg",
+      "path": "assets/hd/41802.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41803.jpg",
+      "path": "assets/hd/41803.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41804.jpg",
+      "path": "assets/hd/41804.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41805.jpg",
+      "path": "assets/hd/41805.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41806.jpg",
+      "path": "assets/hd/41806.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41807.jpg",
+      "path": "assets/hd/41807.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41825-skip-intro.jpg",
+      "path": "assets/hd/41825-skip-intro.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41826-episode-browser.jpg",
+      "path": "assets/hd/41826-episode-browser.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41828-cast-explorer.jpg",
+      "path": "assets/hd/41828-cast-explorer.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/41829-up-next.jpg",
+      "path": "assets/hd/41829-up-next.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/signal-chrome.png",
+      "path": "assets/hd/signal-chrome.webp",
+      "original": [
+        1494,
+        396
+      ],
+      "size": [
+        2988,
+        792
+      ]
+    },
+    {
+      "source": "assets/signal-membership-pricing.jpg",
+      "path": "assets/hd/signal-membership-pricing.webp",
+      "original": [
+        1536,
+        864
+      ],
+      "size": [
+        3072,
+        1728
+      ]
+    },
+    {
+      "source": "assets/tour/poster-alert.jpg",
+      "path": "assets/hd/tour/poster-alert.webp",
+      "original": [
+        1200,
+        676
+      ],
+      "size": [
+        2400,
+        1352
+      ]
+    },
+    {
+      "source": "assets/tour/poster-catalog.jpg",
+      "path": "assets/hd/tour/poster-catalog.webp",
+      "original": [
+        1200,
+        676
+      ],
+      "size": [
+        2400,
+        1352
+      ]
+    },
+    {
+      "source": "assets/tour/poster-grid.jpg",
+      "path": "assets/hd/tour/poster-grid.webp",
+      "original": [
+        1200,
+        676
+      ],
+      "size": [
+        2400,
+        1352
+      ]
+    },
+    {
+      "source": "assets/tour/poster-overlay.jpg",
+      "path": "assets/hd/tour/poster-overlay.webp",
+      "original": [
+        1200,
+        676
+      ],
+      "size": [
+        2400,
+        1352
+      ]
+    },
+    {
+      "source": "assets/tour/poster-trailer.jpg",
+      "path": "assets/hd/tour/poster-trailer.webp",
+      "original": [
+        1200,
+        676
+      ],
+      "size": [
+        2400,
+        1352
+      ]
+    },
+    {
+      "source": "assets/tour/showcase-poster.jpg",
+      "path": "assets/hd/tour/showcase-poster.webp",
+      "original": [
+        1200,
+        676
+      ],
+      "size": [
+        2400,
+        1352
+      ]
+    }
+  ]
+}
